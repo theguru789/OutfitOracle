@@ -172,32 +172,6 @@ struct ContentView: View {
                 
                 
                 Spacer()
-                
-                
-                // MARK: Bottom Navigation
-                HStack {
-                    Spacer()
-                    Image(systemName: "camera")
-                    Spacer()
-                    Image(systemName: "bubble.left.and.bubble.right")
-                    Spacer()
-                    
-                    VStack {
-                        Text("outfit")
-                            .font(.headline)
-                        Text("ORACLE")
-                            .font(.caption)
-                    }
-                    
-                    Spacer()
-                    Image(systemName: "hanger")
-                    Spacer()
-                    Image(systemName: "person")
-                    Spacer()
-                }
-                .padding()
-                .background(Color.brown.opacity(0.7))
-                .foregroundColor(.yellow)
             }
         }
     }
