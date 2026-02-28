@@ -32,7 +32,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
-            Text("Chat Screen")
+            ChatView()
                 .tabItem {
                     Image(systemName: "bubble.left.and.bubble.right")
                     Text("Chat")
@@ -46,14 +46,14 @@ struct MainTabView: View {
                 }
                 .tag(2) // Home tab
             
-            Text("Closet Screen")
+            ClosetView()
                 .tabItem {
                     Image(systemName: "hanger")
                     Text("Closet")
                 }
                 .tag(3)
             
-            Text("Profile Screen")
+            ProfileView()
                 .tabItem {
                     Image(systemName: "person")
                     Text("Profile")

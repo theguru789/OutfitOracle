@@ -106,7 +106,7 @@ struct ContentView: View {
                 
                 
                 // MARK: Middle Section
-                HStack(spacing: 15) {
+                HStack() {
                     
                     // One Year Ago Card
                     VStack {
