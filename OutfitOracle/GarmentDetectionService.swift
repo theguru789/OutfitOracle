@@ -2,6 +2,14 @@
 //  GarmentDetectionService.swift
 //  OutfitOracle
 //
+//  Created by Guru Sanka on 7/18/26.
+//
+
+
+//
+//  GarmentDetectionService.swift
+//  OutfitOracle
+//
 
 import Vision
 import CoreML

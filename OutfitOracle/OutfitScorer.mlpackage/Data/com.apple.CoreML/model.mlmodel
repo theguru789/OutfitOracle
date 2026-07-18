@@ -1,0 +1,392 @@
+ö
+M
+outfitVector0Concatenated attribute vectors for up to 4 items*	
+¨ €R
+compatibilityScore	*
+ €¢‚
+!OutfitOracle Compatibility Scorer¢:
++com.github.apple.coremltools.source_dialectTorchScript¢:
+,com.github.apple.coremltools.conversion_date
+2026-07-16¢4
+#com.github.apple.coremltools.sourcetorch==2.12.0¢+
+$com.github.apple.coremltools.version9.0²°Â
+main¹
+#
+outfitVector
+
+
+¨CoreML5ˆ
+CoreML5ücompatibilityScore|
+const$
+outfitVector_to_fp16_dtype_0
+*
+val
+
+
+"
+fp16*2
+name*
+"
+ "
+outfitVector_to_fp16_dtype_0¤
+const,
+net_0_weight_to_fp16
+
+
+€
+¨*A
+val:
+
+
+€
+¨*"
+@model_path/weights/weight.bin@**
+name"
+
+"
+net_0_weight_to_fp16”
+const#
+net_0_bias_to_fp16
+
+
+€*<
+val5
+
+
+€*$
+@model_path/weights/weight.bin€¡*(
+name 
+
+"
+net_0_bias_to_fp16“
+cast
+x
+
+outfitVector)
+dtype 
+
+outfitVector_to_fp16_dtype_0+
+outfitVector_to_fp16
+
+
+
+¨*
+name
+
+
+"
+cast_1À
+linear
+bias
+
+net_0_bias_to_fp16
+x
+
+outfitVector_to_fp16"
+weight
+
+net_0_weight_to_fp16)
+linear_0_cast_fp16
+
+
+
+€*(
+name 
+
+"
+linear_0_cast_fp16v
+relu
+x
+
+linear_0_cast_fp16(
+input_3_cast_fp16
+
+
+
+€*'
+name
+
+"
+input_3_cast_fp16¦
+const,
+net_3_weight_to_fp16
+
+
+€
+€*C
+val<
+
+
+€
+€*$
+@model_path/weights/weight.binÀ¥**
+name"
+
+"
+net_3_weight_to_fp16”
+const#
+net_3_bias_to_fp16
+
+
+€*<
+val5
+
+
+€*$
+@model_path/weights/weight.bin€¦	*(
+name 
+
+"
+net_3_bias_to_fp16½
+linear
+bias
+
+net_3_bias_to_fp16
+x
+
+input_3_cast_fp16"
+weight
+
+net_3_weight_to_fp16)
+linear_1_cast_fp16
+
+
+
+€*(
+name 
+
+"
+linear_1_cast_fp16v
+relu
+x
+
+linear_1_cast_fp16(
+input_9_cast_fp16
+
+
+
+€*'
+name
+
+"
+input_9_cast_fp16¤
+const+
+net_6_weight_to_fp16
+
+
+@
+€*B
+val;
+
+
+@
+€*$
+@model_path/weights/weight.binÀ¨	**
+name"
+
+"
+net_6_weight_to_fp16’
+const"
+net_6_bias_to_fp16
+
+
+
+@*;
+val4
+
+
+
+@*$
+@model_path/weights/weight.bin€©
+*(
+name 
+
+"
+net_6_bias_to_fp16¼
+linear
+bias
+
+net_6_bias_to_fp16
+x
+
+input_9_cast_fp16"
+weight
+
+net_6_weight_to_fp16(
+linear_2_cast_fp16
+
+
+
+@*(
+name 
+
+"
+linear_2_cast_fp16w
+relu
+x
+
+linear_2_cast_fp16(
+input_15_cast_fp16
+
+
+
+@*(
+name 
+
+"
+input_15_cast_fp16¢
+const*
+net_8_weight_to_fp16
+
+
+
+@*A
+val:
+
+
+
+@*$
+@model_path/weights/weight.binÀª
+**
+name"
+
+"
+net_8_weight_to_fp16v
+const"
+net_8_bias_to_fp16
+
+
+
+*
+val
+
+
+
+
+:
+W´*(
+name 
+
+"
+net_8_bias_to_fp16½
+linear
+bias
+
+net_8_bias_to_fp16
+x
+
+input_15_cast_fp16"
+weight
+
+net_8_weight_to_fp16(
+linear_3_cast_fp16
+
+
+
+*(
+name 
+
+"
+linear_3_cast_fp16u
+sigmoid
+x
+
+linear_3_cast_fp16&
+var_26_cast_fp16
+
+
+
+*%
+name
+
+"
+op_26_cast_fp16s
+const
+var_28_axes_0
+
+
+*'
+val 
+
+
+
+
+
+ÿÿÿÿÿÿÿÿÿ*"
+name
+
+"
+op_28_axes_0ˆ
+squeeze
+axes
+
+var_28_axes_0
+x
+
+var_26_cast_fp16 
+var_28_cast_fp16
+
+
+
+*%
+name
+
+"
+op_28_cast_fp16ƒ
+const(
+ var_28_cast_fp16_to_fp32_dtype_0
+*
+val
+
+
+"
+fp32*5
+name-
+%
+#"!
+op_28_cast_fp16_to_fp32_dtype_0’
+cast
+x
+
+var_28_cast_fp16-
+dtype$
+"
+ var_28_cast_fp16_to_fp32_dtype_0"
+compatibilityScore
+
+
+*
+name
+
+
+"
+cast_0"æ
+	buildInfoØ"
+
+
+Å"Â
+6
+!
+
+"
+coremltools-version
+	
+"
+9.0
+A
+)
+!
+"
+coremltools-component-torch
+
+
+"
+2.12.0
+E
+(
+ 
+"
+coremltools-source-dialect
+
+"
+TorchScript
