@@ -53,8 +53,10 @@ nonisolated struct TrendCoverage: Sendable {
 
 // MARK: - Matching
 nonisolated enum TrendMatcher {
-    /// Minimum similarity for an owned item to count as "you already have this"
-    static let threshold = 0.5
+    /// Minimum similarity for an owned item to count as "you already have this".
+    /// Type (0.4) + color (0.35) = 0.75 passes; type + pattern + fabric alone (0.65)
+    /// does not, so a red floral skirt never counts as "jeans".
+    static let threshold = 0.7
 
     /// 0…1 similarity between an item and a trend slot (role must match)
     static func similarity(_ item: ItemSnapshot, _ slot: TrendSlot) -> Double {
