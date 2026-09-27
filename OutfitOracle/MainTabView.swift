@@ -8,57 +8,57 @@
 import SwiftUI
 
 struct MainTabView: View {
-    
-    // Step 1: Track the selected tab
-    @State private var selectedTab = 2 // 0 = Camera, 1 = Chat, 2 = Home/Oracle, 3 = Closet, 4 = Profile
-    
+
+    @Environment(AppState.self) private var appState
+
     init() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.brown
-        
+
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
-    
+
     var body: some View {
-        // Step 2: Bind the selection
-        TabView(selection: $selectedTab) {
-            
+        @Bindable var appState = appState
+
+        TabView(selection: $appState.selectedTab) {
+
             UploadView()
                 .tabItem {
                     Image(systemName: "camera")
                     Text("Camera")
                 }
-                .tag(0)
-            
+                .tag(AppTab.camera)
+
             ChatView()
                 .tabItem {
                     Image(systemName: "bubble.left.and.bubble.right")
                     Text("Chat")
                 }
-                .tag(1)
-            
+                .tag(AppTab.chat)
+
             ContentView()
                 .tabItem {
                     Image(systemName: "sparkles")
                     Text("Oracle")
                 }
-                .tag(2) // Home tab
-            
+                .tag(AppTab.home) // Home tab
+
             ClosetView()
                 .tabItem {
                     Image(systemName: "hanger")
                     Text("Closet")
                 }
-                .tag(3)
-            
+                .tag(AppTab.closet)
+
             ProfileView()
                 .tabItem {
                     Image(systemName: "person")
                     Text("Profile")
                 }
-                .tag(4)
+                .tag(AppTab.profile)
         }
         .accentColor(.yellow)
         .background(Color.brown.ignoresSafeArea(edges: .bottom))
