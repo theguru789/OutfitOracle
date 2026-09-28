@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "season": "Fall / Winter 2026",
+  "featuredID": "mocha-layers",
+  "looks": [
+    {
+      "id": "mocha-layers",
+      "name": "Mocha Layers",
+      "season": "Fall / Winter 2026",
+      "blurb": "Warm browns and creams layered head to toe. Chances are your closet already has most of it.",
+      "palette": ["#7B5236", "#A67B5B", "#E8DCC8", "#F5F5F0"],
+      "slots": [
+        { "role": "top", "colors": ["white", "brown"], "patterns": ["solid"], "fabrics": ["knit", "cotton"], "searchTerm": "cream knit sweater" },
+        { "role": "bottom", "colors": ["brown", "black"], "patterns": ["solid"], "fabrics": [], "searchTerm": "brown wide leg trousers" },
+        { "role": "outerwear", "colors": ["brown"], "patterns": [], "fabrics": ["wool", "leather"], "searchTerm": "brown wool coat" },
+        { "role": "shoes", "colors": ["brown", "black"], "patterns": [], "fabrics": ["leather"], "searchTerm": "brown leather loafers" }
+      ]
+    },
+    {
+      "id": "denim-on-denim",
+      "name": "Denim on Denim",
+      "season": "Fall / Winter 2026",
+      "blurb": "Double denim is back. Pair a jacket or shirt with jeans in a close shade.",
+      "palette": ["#1F2F55", "#2E6FD8", "#8FB3E6", "#F5F5F0"],
+      "slots": [
+        { "role": "top", "colors": ["white", "blue", "grey"], "patterns": ["solid", "striped"], "fabrics": ["cotton"], "searchTerm": "white cotton tee" },
+        { "role": "bottom", "colors": ["blue", "navy"], "patterns": [], "fabrics": ["denim"], "searchTerm": "straight leg jeans" },
+        { "role": "outerwear", "colors": ["blue", "navy"], "patterns": [], "fabrics": ["denim"], "searchTerm": "denim jacket" }
+      ]
+    },
+    {
+      "id": "preppy-stripes",
+      "name": "Preppy Stripes",
+      "season": "Fall / Winter 2026",
+      "blurb": "Classic stripes with navy and crisp white. Timeless enough to wear for years.",
+      "palette": ["#1F2F55", "#F5F5F0", "#C0392B", "#E8C547"],
+      "slots": [
+        { "role": "top", "colors": ["navy", "white", "blue"], "patterns": ["striped"], "fabrics": ["cotton", "knit"], "searchTerm": "navy striped shirt" },
+        { "role": "bottom", "colors": ["white", "navy", "brown"], "patterns": ["solid"], "fabrics": [], "searchTerm": "chino trousers" },
+        { "role": "shoes", "colors": ["white", "brown"], "patterns": [], "fabrics": ["leather"], "searchTerm": "white leather sneakers" }
+      ]
+    },
+    {
+      "id": "cherry-red-pop",
+      "name": "Cherry Red Pop",
+      "season": "Fall / Winter 2026",
+      "blurb": "One red statement piece against neutrals. Swap a single item and the whole look changes.",
+      "palette": ["#7A1F2B", "#C0392B", "#1E1E1E", "#8E8E8E"],
+      "slots": [
+        { "role": "top", "colors": ["red"], "patterns": ["solid"], "fabrics": ["knit", "cotton"], "searchTerm": "red knit sweater" },
+        { "role": "bottom", "colors": ["black", "grey"], "patterns": ["solid"], "fabrics": [], "searchTerm": "black trousers" },
+        { "role": "shoes", "colors": ["black"], "patterns": [], "fabrics": ["leather"], "searchTerm": "black leather boots" }
+      ]
+    },
+    {
+      "id": "cozy-knits",
+      "name": "Cozy Knit Season",
+      "season": "Fall / Winter 2026",
+      "blurb": "Chunky knits in soft grey and oatmeal. Re-wear the sweaters you already love.",
+      "palette": ["#8E8E8E", "#D8CFC4", "#F5F5F0", "#3F8A4F"],
+      "slots": [
+        { "role": "top", "colors": ["grey", "white", "green"], "patterns": ["solid"], "fabrics": ["knit", "wool"], "searchTerm": "chunky knit sweater" },
+        { "role": "bottom", "colors": ["blue", "grey", "black"], "patterns": [], "fabrics": ["denim"], "searchTerm": "relaxed jeans" },
+        { "role": "accessory", "colors": ["grey", "brown", "white"], "patterns": [], "fabrics": ["knit", "wool"], "searchTerm": "knit scarf" }
+      ]
+    },
+    {
+      "id": "moto-edge",
+      "name": "Moto Edge",
+      "season": "Fall / Winter 2026",
+      "blurb": "A leather jacket over a simple tee and dark denim. One jacket works for dozens of outfits.",
+      "palette": ["#1E1E1E", "#4A4A4A", "#1F2F55", "#F5F5F0"],
+      "slots": [
+        { "role": "outerwear", "colors": ["black", "brown"], "patterns": [], "fabrics": ["leather"], "searchTerm": "leather moto jacket" },
+        { "role": "top", "colors": ["white", "grey", "black"], "patterns": ["solid", "graphic"], "fabrics": ["cotton"], "searchTerm": "graphic tee" },
+        { "role": "bottom", "colors": ["black", "navy", "blue"], "patterns": [], "fabrics": ["denim"], "searchTerm": "black skinny jeans" },
+        { "role": "shoes", "colors": ["black"], "patterns": [], "fabrics": ["leather"], "searchTerm": "black ankle boots" }
+      ]
+    },
+    {
+      "id": "romantic-florals",
+      "name": "Romantic Florals",
+      "season": "Fall / Winter 2026",
+      "blurb": "Floral dresses carried into cold weather under a cozy layer.",
+      "palette": ["#E89AB5", "#7D4E9E", "#3F8A4F", "#F5F5F0"],
+      "slots": [
+        { "role": "dress", "colors": ["pink", "purple", "white", "black"], "patterns": ["floral"], "fabrics": ["chiffon", "cotton"], "searchTerm": "floral midi dress" },
+        { "role": "outerwear", "colors": ["white", "brown", "grey"], "patterns": [], "fabrics": ["knit", "wool"], "searchTerm": "cropped cardigan" },
+        { "role": "shoes", "colors": ["brown", "black"], "patterns": [], "fabrics": ["leather"], "searchTerm": "leather ankle boots" }
+      ]
+    }
+  ]
+}
