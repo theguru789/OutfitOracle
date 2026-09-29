@@ -110,6 +110,7 @@ struct ColorSwatch: View {
             .fill(Color(hex: hex))
             .frame(width: size, height: size)
             .overlay(Circle().stroke(Color.ooBrown.opacity(0.4), lineWidth: 1))
+            .accessibilityHidden(true)   // the color name is always shown/read next to it
     }
 }
 
@@ -136,5 +137,8 @@ struct ItemThumbnail: View {
         .frame(maxWidth: .infinity)
         .clipped()
         .cornerRadius(15)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(item.attributeSummary.isEmpty ? item.name : "\(item.name), \(item.attributeSummary)")
+        .accessibilityAddTraits(.isImage)
     }
 }

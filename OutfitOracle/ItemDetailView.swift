@@ -46,6 +46,7 @@ struct ItemDetailView: View {
                         }
                         .buttonStyle(OOButtonStyle())
                         .disabled(justLogged)
+                        .sensoryFeedback(.success, trigger: justLogged)
 
                         // Editable attributes
                         VStack(alignment: .leading, spacing: 10) {

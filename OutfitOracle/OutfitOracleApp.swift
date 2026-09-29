@@ -28,6 +28,14 @@ struct OutfitOracleApp: App {
         }
     }()
 
+    init() {
+        // Demo/test runs skip the intro, unless `-showOnboarding` asks for it fresh
+        if Self.isDemo {
+            let show = ProcessInfo.processInfo.arguments.contains("-showOnboarding")
+            UserDefaults.standard.set(!show, forKey: PrefKeys.hasOnboarded)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             MainTabView()

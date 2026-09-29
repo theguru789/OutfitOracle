@@ -12,6 +12,7 @@ import SwiftUI
 struct ProfileView: View {
     @AppStorage(PrefKeys.name) private var name = ""
     @AppStorage(PrefKeys.photo) private var photoData = Data()
+    @AppStorage(PrefKeys.hasOnboarded) private var hasOnboarded = true
 
     @State private var photoItem: PhotosPickerItem?
     @State private var editingName = false
@@ -19,7 +20,7 @@ struct ProfileView: View {
     @State private var sheet: ProfileSheet?
 
     enum ProfileSheet: String, Identifiable {
-        case stats, settings, accessibility, archives
+        case stats, settings, accessibility, archives, about
         var id: String { rawValue }
     }
 
@@ -89,6 +90,8 @@ struct ProfileView: View {
                         ProfileCard(icon: "gearshape.fill", title: "Settings") { sheet = .settings }
                         ProfileCard(icon: "slider.horizontal.3", title: "Accessibility") { sheet = .accessibility }
                         ProfileCard(icon: "archivebox.fill", title: "Archives") { sheet = .archives }
+                        ProfileCard(icon: "info.circle.fill", title: "About & Privacy") { sheet = .about }
+                        ProfileCard(icon: "play.circle.fill", title: "How it works") { hasOnboarded = false }
                     }
                     .padding(24)
                 }
@@ -116,6 +119,7 @@ struct ProfileView: View {
             case .settings: SettingsView()
             case .accessibility: AccessibilitySettingsView()
             case .archives: ArchivesView()
+            case .about: AboutView()
             }
         }
     }

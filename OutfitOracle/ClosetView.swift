@@ -67,6 +67,7 @@ struct ClosetView: View {
                                     ClosetItemCard(item: item)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityHint(item.isForgotten ? "Not worn lately. Opens details." : "Opens details.")
                             }
                         }
                         .padding()

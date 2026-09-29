@@ -49,6 +49,7 @@ enum PrefKeys {
     static let styles = "favoriteStyles"              // comma separated
     static let checkForTrends = "checkForTrends"
     static let highContrast = "highContrast"
+    static let hasOnboarded = "hasOnboarded"
 }
 
 extension UserDefaults {

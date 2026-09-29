@@ -10,6 +10,10 @@ import SwiftUI
 struct MainTabView: View {
 
     @Environment(AppState.self) private var appState
+    @AppStorage(PrefKeys.hasOnboarded) private var hasOnboarded = false
+
+    /// Show the intro on first launch, or when replayed from Profile ▸ How it works
+    private var needsOnboarding: Bool { !hasOnboarded }
 
     init() {
         let appearance = UITabBarAppearance()
@@ -62,5 +66,11 @@ struct MainTabView: View {
         }
         .accentColor(.yellow)
         .background(Color.brown.ignoresSafeArea(edges: .bottom))
+        .fullScreenCover(isPresented: Binding(
+            get: { needsOnboarding },
+            set: { if !$0 { hasOnboarded = true } }
+        )) {
+            OnboardingView { hasOnboarded = true }
+        }
     }
 }

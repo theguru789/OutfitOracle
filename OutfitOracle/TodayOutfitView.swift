@@ -76,6 +76,9 @@ struct TodayOutfitView: View {
                             }
                             .buttonStyle(OOButtonStyle())
                             .disabled(loggedID == outfit.id)
+                            .sensoryFeedback(.success, trigger: loggedID)
+
+                            ShareOutfitButton(outfit: outfit, lookup: lookup)
                         }
                     }
                 }

@@ -142,6 +142,9 @@ struct TrendDetailView: View {
                             .font(.subheadline.bold())
                             .foregroundColor(.ooBrown)
                             .disabled(loggedID == outfit.id)
+                            .sensoryFeedback(.success, trigger: loggedID)
+
+                            ShareOutfitButton(outfit: outfit, lookup: lookup, trendName: look.name)
                         }
                     }
 

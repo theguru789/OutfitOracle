@@ -12,8 +12,20 @@ struct StatsView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(filter: #Predicate<WardrobeItem> { !$0.isArchived }) private var items: [WardrobeItem]
     @Query(sort: \WearLog.date, order: .reverse) private var logs: [WearLog]
+    @Query(filter: #Predicate<WardrobeItem> { $0.isArchived }) private var passedOn: [WardrobeItem]
+    @Environment(TrendService.self) private var trends
 
     @State private var selectedItem: WardrobeItem?
+
+    /// Trend pieces the user already owned — each one is a purchase they didn't need
+    private var trendPiecesOwned: Int {
+        let closet = items.map(\.snapshot)
+        return trends.looks.reduce(0) { $0 + TrendMatcher.coverage(of: $1, closet: closet).matches.count }
+    }
+
+    private var trendOutfitsWorn: Int {
+        logs.filter { $0.trendID != nil }.count
+    }
 
     private var weekLogs: [WearLog] {
         let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
@@ -44,6 +56,8 @@ struct StatsView: View {
                 Color.ooCream.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 16) {
+                        impactSection
+
                         HStack(spacing: 12) {
                             tile(value: "\(weekLogs.count)", label: "outfits logged this week", color: .ooButter)
                             tile(value: "\(totalRewears)", label: "total re-wears", color: Color.ooPink)
@@ -82,6 +96,46 @@ struct StatsView: View {
             .sheet(item: $selectedItem) { ItemDetailView(item: $0) }
         }
         .tint(.brown)
+    }
+
+    // MARK: - Sustainability impact (only numbers the app can actually measure)
+    private var impactSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Your sustainability impact", systemImage: "leaf.fill")
+                .font(.headline)
+
+            HStack(spacing: 10) {
+                impactStat("\(trendPiecesOwned)", "trend pieces you already owned, so no need to buy them")
+                impactStat("\(trendOutfitsWorn)", "trend looks worn from your own closet")
+                impactStat("\(passedOn.count)", "pieces passed on or retired")
+            }
+
+            Text("Keeping clothes in use just 9 months longer cuts their carbon, water and waste footprint by about 20–30%.")
+                .font(.caption)
+            Text("Source: WRAP, Valuing Our Clothes (2012)")
+                .font(.caption2)
+                .opacity(0.8)
+        }
+        .foregroundColor(.ooBrown)
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.ooButter)
+        .cornerRadius(20)
+    }
+
+    private func impactStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value).font(.title.bold())
+            Text(label)
+                .font(.caption2)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
+        .padding(8)
+        .background(Color.ooCream)
+        .cornerRadius(14)
+        .accessibilityElement(children: .combine)
     }
 
     private func tile(value: String, label: String, color: Color) -> some View {
