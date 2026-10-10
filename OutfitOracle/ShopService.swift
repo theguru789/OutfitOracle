@@ -27,10 +27,11 @@ nonisolated enum ShopService {
     static let tagline = "Shop secondhand first. Every reused piece keeps clothes out of landfills."
 
     /// Links for a missing trend piece, most sustainable first
-    static func links(for slot: TrendSlot) -> [ShopLink] {
+    static func links(for slot: TrendSlot, gender: Gender = .current) -> [ShopLink] {
         let color = slot.colors.first.map { "\($0) " } ?? ""
         let term = slot.searchTerm.lowercased().hasPrefix(color.lowercased()) ? slot.searchTerm : color + slot.searchTerm
-        return links(for: term)
+        // "men's" / "women's" from the intro so searches show the right section
+        return links(for: [gender.shopPrefix, term].compactMap { $0 }.joined(separator: " "))
     }
 
     static func links(for query: String) -> [ShopLink] {

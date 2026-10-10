@@ -24,6 +24,9 @@ class WardrobeItem {
     var wearCount: Int = 0
     var lastWorn: Date? = nil
     var isArchived: Bool = false
+    /// Garment with the background removed (PNG with transparency), used for
+    /// outfit pictures. Filled in after saving; nil until then / if it fails.
+    @Attribute(.externalStorage) var cutoutImageData: Data? = nil
 
     init(
         croppedImageData: Data,
@@ -58,6 +61,11 @@ class WardrobeItem {
     // Convenience: UIImage from stored data
     var croppedImage: UIImage? {
         UIImage(data: croppedImageData)
+    }
+
+    /// Background-removed garment if available, otherwise the cropped photo
+    var cutoutImage: UIImage? {
+        cutoutImageData.flatMap(UIImage.init(data:)) ?? croppedImage
     }
 
     // Human-readable attribute summary
@@ -100,6 +108,24 @@ class WearLog {
         self.date = date
         self.itemIDs = itemIDs
         self.trendID = trendID
+    }
+}
+
+// MARK: - Outfits the user saved and named
+@Model
+class SavedOutfit {
+    var id: UUID
+    var name: String
+    var itemIDs: [UUID]
+    var dateCreated: Date
+    var wearCount: Int = 0
+    var lastWorn: Date? = nil
+
+    init(name: String, itemIDs: [UUID]) {
+        self.id = UUID()
+        self.name = name
+        self.itemIDs = itemIDs
+        self.dateCreated = Date()
     }
 }
 

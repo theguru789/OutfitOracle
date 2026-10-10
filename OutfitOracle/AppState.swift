@@ -9,7 +9,7 @@ import CoreLocation
 import Observation
 import SwiftUI
 
-enum AppTab: Int {
+nonisolated enum AppTab: Int, CaseIterable {
     case camera = 0, chat, home, closet, profile
 }
 
@@ -20,6 +20,29 @@ final class AppState {
     var weatherStatus: String = "Loading…"
 
     private let location = LocationFetcher()
+
+    init() {
+        selectedTab = Self.launchTab(isDemo: OutfitOracleApp.isDemo, defaults: .standard)
+    }
+
+    /// The very first launch opens the Camera (so people start by snapping their
+    /// closet); every launch after that opens Home. Demo/test runs always open Home.
+    nonisolated static func launchTab(isDemo: Bool, defaults: UserDefaults) -> AppTab {
+        if isDemo {
+            // `-startTab closet` etc. opens a specific tab (handy for demo screenshots)
+            let args = ProcessInfo.processInfo.arguments
+            if let i = args.firstIndex(of: "-startTab"), i + 1 < args.count,
+               let tab = AppTab.allCases.first(where: { "\($0)" == args[i + 1] }) {
+                return tab
+            }
+            return .home
+        }
+        // Installs from before this flag existed already finished onboarding, so they count as launched
+        let launchedBefore = defaults.bool(forKey: PrefKeys.hasLaunchedBefore)
+            || defaults.bool(forKey: PrefKeys.hasOnboarded)
+        defaults.set(true, forKey: PrefKeys.hasLaunchedBefore)
+        return launchedBefore ? .home : .camera
+    }
 
     func loadWeather() async {
         guard weather == nil else { return }
@@ -42,7 +65,7 @@ final class AppState {
 }
 
 // MARK: - Preferences (kept in UserDefaults via @AppStorage)
-enum PrefKeys {
+nonisolated enum PrefKeys {
     static let name = "profileName"
     static let photo = "profilePhoto"
     static let favoriteColors = "favoriteColors"      // comma separated
@@ -50,9 +73,12 @@ enum PrefKeys {
     static let checkForTrends = "checkForTrends"
     static let highContrast = "highContrast"
     static let hasOnboarded = "hasOnboarded"
+    static let hasLaunchedBefore = "hasLaunchedBefore"
+    static let gender = "gender"              // Gender.rawValue
+    static let styleNotes = "styleNotes"      // free-text style preferences
 }
 
-extension UserDefaults {
+nonisolated extension UserDefaults {
     var favoriteColors: Set<String> {
         Set((string(forKey: PrefKeys.favoriteColors) ?? "")
             .split(separator: ",").map(String.init))

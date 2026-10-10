@@ -14,8 +14,6 @@ struct OutfitShareCard: View {
     let lookup: [UUID: WardrobeItem]
     var trendName: String?
 
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -33,19 +31,7 @@ struct OutfitShareCard: View {
             }
             .foregroundColor(.ooBrown)
 
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(outfit.items) { snap in
-                    if let item = lookup[snap.id] {
-                        VStack(spacing: 4) {
-                            ItemThumbnail(item: item, height: 150)
-                            Text(item.name)
-                                .font(.caption)
-                                .lineLimit(1)
-                                .foregroundColor(.ooBrown)
-                        }
-                    }
-                }
-            }
+            OutfitFlatLay(outfit: outfit, lookup: lookup, height: 380)
 
             if let trendName {
                 Text("On trend: \(trendName)")

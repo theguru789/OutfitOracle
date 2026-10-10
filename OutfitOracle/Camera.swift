@@ -34,17 +34,17 @@ struct UploadView: View {
                 HStack {
                     Image(systemName: "camera.viewfinder")
                     Text(manualMode ? "Adding shoes or accessories" : "Snap an outfit or a single piece")
-                        .foregroundColor(.brown.opacity(0.7))
+                        .foregroundColor(.ooBrown.opacity(0.7))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                     Spacer()
                     Image(systemName: "sparkles")
                 }
-                .foregroundColor(.brown)
+                .foregroundColor(.ooBrown)
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 30)
-                        .stroke(Color.brown, lineWidth: 2)
+                        .stroke(Color.ooBrown, lineWidth: 2)
                 )
                 .padding(.horizontal)
 
@@ -106,7 +106,7 @@ struct UploadView: View {
                     Label(manualMode ? "Back to auto-detect" : "Add shoes or accessories manually",
                           systemImage: manualMode ? "wand.and.stars" : "hand.point.up.left")
                         .font(.footnote.weight(.semibold))
-                        .foregroundColor(.brown)
+                        .foregroundColor(.ooBrown)
                 }
             }
             .padding(.vertical)
@@ -184,6 +184,8 @@ struct UploadView: View {
             modelContext.insert(item)
         }
         try? modelContext.save()
+        // Lift each garment off its background for outfit pictures (runs in the background)
+        Task { await CutoutService.backfill(modelContext) }
         drafts = []
         pickedImage = nil
         manualMode = false
@@ -258,6 +260,7 @@ struct ReviewGarmentsSheet: View {
             }
             .navigationTitle("Review")
             .navigationBarTitleDisplayMode(.inline)
+            .keyboardDoneButton()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -269,7 +272,7 @@ struct ReviewGarmentsSheet: View {
                 }
             }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 }
 
@@ -295,7 +298,7 @@ struct DraftCard: View {
                         .font(.headline)
                         .textFieldStyle(.roundedBorder)
                     Toggle("Keep", isOn: $draft.keep)
-                        .tint(.brown)
+                        .tint(.ooBrown)
                     HStack {
                         ColorSwatch(hex: draft.colorHex)
                         Text(draft.color.capitalizedFirst)
@@ -336,7 +339,7 @@ struct AttributePicker<Option: Hashable>: View {
                 }
             }
             .pickerStyle(.menu)
-            .tint(.brown)
+            .tint(.ooBrown)
         }
     }
 }

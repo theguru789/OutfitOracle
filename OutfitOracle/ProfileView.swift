@@ -12,7 +12,6 @@ import SwiftUI
 struct ProfileView: View {
     @AppStorage(PrefKeys.name) private var name = ""
     @AppStorage(PrefKeys.photo) private var photoData = Data()
-    @AppStorage(PrefKeys.hasOnboarded) private var hasOnboarded = true
 
     @State private var photoItem: PhotosPickerItem?
     @State private var editingName = false
@@ -20,11 +19,32 @@ struct ProfileView: View {
     @State private var sheet: ProfileSheet?
 
     enum ProfileSheet: String, Identifiable {
-        case stats, settings, accessibility, archives, about
+        case stats, settings, accessibility, archives, about, guide
         var id: String { rawValue }
     }
 
-    private let columns = [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)]
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
+
+    @Query(filter: #Predicate<WardrobeItem> { !$0.isArchived }) private var items: [WardrobeItem]
+    @Query private var outfits: [SavedOutfit]
+    private var rewears: Int { items.reduce(0) { $0 + max(0, $1.wearCount - 1) } }
+    private var wornThisMonthPercent: Int {
+        guard !items.isEmpty else { return 0 }
+        let worn = items.filter { $0.lastWorn != nil && $0.daysSinceWorn < 30 }.count
+        return Int((Double(worn) / Double(items.count) * 100).rounded())
+    }
+
+    private func impactTile(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.title3.bold())
+            Text(label).font(.caption2).multilineTextAlignment(.center).lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, minHeight: 56)
+        .padding(6)
+        .background(Color.ooCream)
+        .cornerRadius(12)
+        .accessibilityElement(children: .combine)
+    }
 
     var body: some View {
         ZStack {
@@ -35,15 +55,12 @@ struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 0) {
 
-                    // Top Header
-                    VStack(spacing: 16) {
-                        Spacer().frame(height: 12)
-
-                        // Profile Image
+                    // Compact header: photo + name + quick numbers on one row
+                    HStack(spacing: 14) {
                         PhotosPicker(selection: $photoItem, matching: .images) {
                             Circle()
-                                .fill(Color.blue.opacity(0.5))
-                                .frame(width: 150, height: 150)
+                                .fill(Color.ooBlue)
+                                .frame(width: 76, height: 76)
                                 .overlay {
                                     if let image = UIImage(data: photoData) {
                                         Image(uiImage: image)
@@ -52,48 +69,94 @@ struct ProfileView: View {
                                             .clipShape(Circle())
                                     } else {
                                         Image(systemName: "person.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 70)
+                                            .font(.system(size: 34))
                                             .foregroundColor(.ooCream)
                                     }
                                 }
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "camera.circle.fill")
-                                        .font(.title)
+                                        .font(.title3)
                                         .foregroundColor(.ooButter)
                                 }
                         }
                         .accessibilityLabel("Change profile photo")
 
-                        // Name
-                        Button {
-                            draftName = name
-                            editingName = true
-                        } label: {
-                            Text(name.isEmpty ? "Tap to add your name" : name)
-                                .font(.largeTitle.bold())
-                                .foregroundColor(.ooLightText)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                                .padding(.horizontal)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Button {
+                                draftName = name
+                                editingName = true
+                            } label: {
+                                Text(name.isEmpty ? "Tap to add your name" : name)
+                                    .font(.title2.bold())
+                                    .foregroundColor(.ooLightText)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
+                            }
+                            Text("\(items.count) items · \(outfits.count) outfits · \(rewears) re-wears")
+                                .font(.caption)
+                                .foregroundColor(.ooLightText.opacity(0.85))
                         }
-
-                        Spacer().frame(height: 12)
+                        Spacer(minLength: 0)
                     }
+                    .padding(.horizontal)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
-                    .background(Color.brown)
+                    .background(Color.ooBrown)
 
                     // Grid buttons
-                    LazyVGrid(columns: columns, spacing: 20) {
+                    LazyVGrid(columns: columns, spacing: 12) {
                         ProfileCard(icon: "chart.bar.fill", title: "Stats") { sheet = .stats }
                         ProfileCard(icon: "gearshape.fill", title: "Settings") { sheet = .settings }
                         ProfileCard(icon: "slider.horizontal.3", title: "Accessibility") { sheet = .accessibility }
                         ProfileCard(icon: "archivebox.fill", title: "Archives") { sheet = .archives }
                         ProfileCard(icon: "info.circle.fill", title: "About & Privacy") { sheet = .about }
-                        ProfileCard(icon: "play.circle.fill", title: "How it works") { hasOnboarded = false }
+                        ProfileCard(icon: "book.fill", title: "How it works") { sheet = .guide }
                     }
-                    .padding(24)
+                    .padding()
+
+                    // At-a-glance impact (full details under Stats)
+                    Button { sheet = .stats } label: {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label("Your impact", systemImage: "leaf.fill")
+                                .font(.headline)
+                            HStack(spacing: 8) {
+                                impactTile("\(rewears)", "re-wears")
+                                impactTile("\(wornThisMonthPercent)%", "closet worn this month")
+                                impactTile("\(items.filter(\.isForgotten).count)", "not worn lately")
+                            }
+                        }
+                        .foregroundColor(.ooBrown)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.ooButter)
+                        .cornerRadius(20)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+
+                    // Most-loved pieces (what you actually re-wear)
+                    let loved = items.filter { $0.wearCount > 0 }.sorted { $0.wearCount > $1.wearCount }.prefix(10)
+                    if !loved.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Most-loved pieces")
+                                .font(.headline)
+                                .foregroundColor(.ooBrown)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(Array(loved)) { item in
+                                        VStack(spacing: 2) {
+                                            ItemThumbnail(item: item, height: 80)
+                                                .frame(width: 76)
+                                            Text("\(item.wearCount)× worn")
+                                                .font(.caption2)
+                                                .foregroundColor(.ooBrown)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                    }
                 }
             }
         }
@@ -120,6 +183,7 @@ struct ProfileView: View {
             case .accessibility: AccessibilitySettingsView()
             case .archives: ArchivesView()
             case .about: AboutView()
+            case .guide: HowItWorksGuideView()
             }
         }
     }
@@ -131,20 +195,22 @@ struct ProfileView: View {
 
         var body: some View {
             Button(action: action) {
-                VStack(spacing: 10) {
+                VStack(spacing: 6) {
                     Image(systemName: icon)
-                        .font(.system(size: 40))
-                        .foregroundColor(Color.brown)
+                        .font(.system(size: 26))
+                        .foregroundColor(Color.ooBrown)
 
                     Text(title)
-                        .font(.headline)
-                        .foregroundColor(Color.brown)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(Color.ooBrown)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                 }
-                .frame(maxWidth: .infinity, minHeight: 120)
+                .padding(.horizontal, 4)
+                .frame(maxWidth: .infinity, minHeight: 84)
                 .background(Color.ooButter)
-                .cornerRadius(25)
+                .cornerRadius(18)
             }
             .buttonStyle(.plain)
         }
@@ -159,6 +225,8 @@ struct SettingsView: View {
     @AppStorage(PrefKeys.favoriteColors) private var favoriteColorsRaw = ""
     @AppStorage(PrefKeys.styles) private var stylesRaw = ""
     @AppStorage(PrefKeys.checkForTrends) private var checkForTrends = true
+    @AppStorage(PrefKeys.gender) private var genderRaw = Gender.unspecified.rawValue
+    @AppStorage(PrefKeys.styleNotes) private var styleNotes = ""
     @State private var sampleLoaded = false
 
     static let styleOptions = ["Casual", "Streetwear", "Preppy", "Minimal", "Boho", "Sporty", "Formal"]
@@ -184,8 +252,25 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    TextField("e.g. comfy, earthy colors, no leather", text: $styleNotes, axis: .vertical)
+                        .lineLimit(1...4)
+                } header: {
+                    Text("In your own words")
+                } footer: {
+                    Text("The Oracle avoids what you say no to and favors what you like.")
+                }
+
+                Section {
+                    Picker("I am", selection: $genderRaw) {
+                        ForEach(Gender.allCases) { Text($0.label).tag($0.rawValue) }
+                    }
+                } footer: {
+                    Text("Used to show the right section in shop links.")
+                }
+
+                Section {
                     Toggle("Check for new trends", isOn: $checkForTrends)
-                        .tint(.brown)
+                        .tint(.ooBrown)
                     Button("Check now") { Task { await trends.refresh() } }
                 } header: {
                     Text("Trends")
@@ -208,6 +293,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(Color.ooCream)
             .navigationTitle("Settings")
+            .keyboardDoneButton()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -215,7 +301,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 
     /// Stores a set of strings as a comma-separated @AppStorage value
@@ -231,10 +317,11 @@ struct SettingsView: View {
 struct FlowChips<ChipLabel: View>: View {
     let options: [String]
     @Binding var selected: Set<String>
+    var minWidth: CGFloat = 96
     @ViewBuilder var label: (String) -> ChipLabel
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: minWidth), spacing: 8)], spacing: 8) {
             ForEach(options, id: \.self) { option in
                 let isOn = selected.contains(option)
                 Button {
@@ -265,7 +352,7 @@ struct AccessibilitySettingsView: View {
             Form {
                 Section {
                     Toggle("High-contrast text", isOn: $highContrast)
-                        .tint(.brown)
+                        .tint(.ooBrown)
                 } footer: {
                     Text("Uses dark brown text on the pink cards so it's easier to read. Outfit Oracle also follows your iPhone's text size setting.")
                 }
@@ -280,7 +367,7 @@ struct AccessibilitySettingsView: View {
                 }
             }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 }
 
@@ -336,6 +423,6 @@ struct ArchivesView: View {
                 }
             }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 }

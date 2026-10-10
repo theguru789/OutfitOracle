@@ -110,6 +110,8 @@ struct ItemDetailView: View {
             }
             .navigationTitle(item.name)
             .navigationBarTitleDisplayMode(.inline)
+            .keyboardDoneButton()
+            .scrollDismissesKeyboard(.interactively)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -136,7 +138,7 @@ struct ItemDetailView: View {
             }
             .safariSheet(url: $safariURL)
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 
     private func statCard(value: String, label: String) -> some View {

@@ -64,7 +64,7 @@ struct TrendCard: View {
                 .font(.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
             ProgressView(value: coverage.fraction)
-                .tint(.yellow)
+                .tint(.ooGold)
             Text(coverage.summary)
                 .font(.caption.weight(.semibold))
         }

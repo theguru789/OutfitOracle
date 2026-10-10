@@ -19,6 +19,7 @@ nonisolated struct OracleContext: Sendable {
     var looks: [TrendLook] = []
     var weather: WeatherSnapshot?
     var favoriteColors: Set<String> = []
+    var preferences: StylePreferences = .none
     var recentSets: [Set<UUID>] = []
 }
 
@@ -94,9 +95,7 @@ final class OracleChat {
     #if canImport(FoundationModels)
     @available(iOS 26.0, *)
     private static func makeSession() -> LanguageModelSession {
-        LanguageModelSession(
-            tools: [GetClosetTool(), SuggestOutfitTool(), TrendsTool()],
-            instructions: """
+        var instructions = """
             You are the Outfit Oracle, a friendly personal stylist inside a wardrobe app \
             that fights textile waste. Always prefer outfits made from clothes the user already \
             owns. Encourage re-wearing forgotten pieces. Only suggest buying something when a \
@@ -105,6 +104,18 @@ final class OracleChat {
             Use the tools to look at the user's closet and trends instead of guessing. \
             Keep replies short (2–4 sentences) and upbeat.
             """
+        // What the user told us in the intro / Settings
+        let notes = UserDefaults.standard.string(forKey: PrefKeys.styleNotes)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !notes.isEmpty {
+            instructions += "\nThe user describes their style like this: \"\(notes)\". Respect it."
+        }
+        if Gender.current != .unspecified {
+            instructions += "\nThe user is \(Gender.current.label.lowercased())."
+        }
+        return LanguageModelSession(
+            tools: [GetClosetTool(), SuggestOutfitTool(), TrendsTool()],
+            instructions: instructions
         )
     }
     #endif
@@ -148,7 +159,7 @@ struct SuggestOutfitTool: Tool {
         let trend = context.looks.first { $0.name.localizedCaseInsensitiveContains(arguments.trendName) && !arguments.trendName.isEmpty }
         let outfits = await OutfitEngine.shared.suggestOutfits(
             from: context.closet, trend: trend, weather: context.weather,
-            favoriteColors: context.favoriteColors, recentlyWorn: context.recentSets, count: 3
+            recentlyWorn: context.recentSets, preferences: context.preferences, count: 3
         )
         await OracleDataStore.shared.setLastOutfits(outfits)
         if outfits.isEmpty { return "Not enough clothes yet. The user needs a top and a bottom, or a dress." }
@@ -248,7 +259,7 @@ nonisolated enum BasicOracle {
     private static func suggest(_ context: OracleContext, trend: TrendLook? = nil, count: Int) async -> [Outfit] {
         await OutfitEngine.shared.suggestOutfits(
             from: context.closet, trend: trend, weather: context.weather,
-            favoriteColors: context.favoriteColors, recentlyWorn: context.recentSets, count: count
+            recentlyWorn: context.recentSets, preferences: context.preferences, count: count
         )
     }
 }

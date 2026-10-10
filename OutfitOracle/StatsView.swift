@@ -67,7 +67,7 @@ struct StatsView: View {
                             Text("Closet worn in the last 30 days")
                                 .font(.headline)
                             ProgressView(value: wornLast30)
-                                .tint(.brown)
+                                .tint(.ooBrown)
                             Text("\(Int(wornLast30 * 100))% of your \(items.count) pieces")
                                 .font(.caption)
                         }
@@ -95,7 +95,7 @@ struct StatsView: View {
             }
             .sheet(item: $selectedItem) { ItemDetailView(item: $0) }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 
     // MARK: - Sustainability impact (only numbers the app can actually measure)

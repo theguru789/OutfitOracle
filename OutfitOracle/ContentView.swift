@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var showLucky = false
     @State private var showStats = false
     @State private var path = NavigationPath()
+    @State private var todayPick: Outfit?
+    @State private var selectedItem: WardrobeItem?
 
     enum HomeRoute: Hashable {
         case trends
@@ -38,6 +40,8 @@ struct ContentView: View {
     }
 
     var body: some View {
+        let lookup = ClosetContext(items: items, logs: logs).lookup
+
         NavigationStack(path: $path) {
             ZStack {
                 Color("Background")
@@ -52,20 +56,20 @@ struct ContentView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.brown)
+                                    .foregroundColor(.ooBrown)
 
                                 Text("Feeling lucky?")
-                                    .foregroundColor(.brown.opacity(0.7))
+                                    .foregroundColor(.ooBrown.opacity(0.7))
 
                                 Spacer()
 
                                 Image(systemName: "dice.fill")
-                                    .foregroundColor(.brown)
+                                    .foregroundColor(.ooBrown)
                             }
                             .padding()
                             .background(
                                 RoundedRectangle(cornerRadius: 30)
-                                    .stroke(Color.brown, lineWidth: 2)
+                                    .stroke(Color.ooBrown, lineWidth: 2)
                             )
                         }
                         .padding(.horizontal)
@@ -93,7 +97,7 @@ struct ContentView: View {
                                                     .font(.caption)
                                             }
                                         }
-                                        .foregroundColor(.brown)
+                                        .foregroundColor(.ooBrown)
                                     }
                                     .padding(.horizontal, 8)
                                 )
@@ -103,12 +107,12 @@ struct ContentView: View {
                                 if let featured = trends.featured { path.append(HomeRoute.trend(featured)) }
                             } label: {
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.pink.opacity(0.3))
+                                    .fill(Color.ooPink)
                                     .frame(minHeight: 90)
                                     .overlay(
                                         HStack {
                                             Image(systemName: "lightbulb")
-                                                .foregroundColor(highContrast ? .brown : .white)
+                                                .foregroundColor(highContrast ? .ooBrown : .white)
 
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text("Oracle’s Look\nof the Week")
@@ -119,7 +123,7 @@ struct ContentView: View {
                                                         .font(.caption)
                                                 }
                                             }
-                                            .foregroundColor(highContrast ? .brown : .white)
+                                            .foregroundColor(highContrast ? .ooBrown : .white)
                                             .minimumScaleFactor(0.7)
                                         }
                                         .padding(.horizontal, 8)
@@ -166,7 +170,7 @@ struct ContentView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 15))
                             }
                             .padding()
-                            .background(Color.blue.opacity(0.4))
+                            .background(Color.ooBlue)
                             .cornerRadius(25)
 
 
@@ -176,13 +180,13 @@ struct ContentView: View {
                                     showToday = true
                                 } label: {
                                     RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color.yellow.opacity(0.4))
+                                        .fill(Color.ooButter)
                                         .frame(height: 120)
                                         .overlay(
                                             Text("What should I\nwear today?")
                                                 .font(.title3)
                                                 .multilineTextAlignment(.center)
-                                                .foregroundColor(.brown)
+                                                .foregroundColor(.ooBrown)
                                                 .bold()
                                                 .minimumScaleFactor(0.7)
                                                 .padding(6)
@@ -198,7 +202,7 @@ struct ContentView: View {
                                         .frame(height: 80)
                                         .overlay(
                                             Text("See my weekly stats")
-                                                .foregroundColor(.brown)
+                                                .foregroundColor(.ooBrown)
                                                 .multilineTextAlignment(.center)
                                                 .padding(6)
                                         )
@@ -214,25 +218,84 @@ struct ContentView: View {
                             path.append(HomeRoute.trends)
                         } label: {
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(Color.pink.opacity(0.4))
-                                .frame(height: 70)
+                                .fill(Color.ooPink)
+                                .frame(height: 56)
                                 .overlay(
                                     HStack {
                                         Text("Explore trends")
                                             .font(.headline)
-                                            .foregroundColor(highContrast ? .brown : .white)
+                                            .foregroundColor(highContrast ? .ooBrown : .white)
                                             .bold()
 
                                         Spacer()
 
                                         Image(systemName: "arrow.right")
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(highContrast ? .ooBrown : .white)
                                     }
                                     .padding(.horizontal)
                                 )
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal)
+
+                        // MARK: Today's pick — a ready outfit right on the home screen
+                        if let pick = todayPick {
+                            Button {
+                                showToday = true
+                            } label: {
+                                HStack(spacing: 12) {
+                                    OutfitFlatLay(outfit: pick, lookup: lookup, height: 150)
+                                        .frame(width: 150)
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("Today's pick")
+                                            .font(.headline)
+                                        Text("\(pick.percent)% style match")
+                                            .font(.subheadline)
+                                        if let reason = pick.reasons.dropFirst().first {
+                                            Text(reason)
+                                                .font(.caption)
+                                                .lineLimit(3)
+                                        }
+                                        Spacer(minLength: 0)
+                                        Label("More outfits", systemImage: "arrow.right")
+                                            .font(.caption.bold())
+                                    }
+                                    Spacer(minLength: 0)
+                                }
+                                .foregroundColor(.ooBrown)
+                                .padding(12)
+                                .background(Color.ooButter)
+                                .cornerRadius(25)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                        }
+
+                        // MARK: Not worn lately — nudge forgotten pieces back into rotation
+                        let forgotten = items.filter(\.isForgotten)
+                            .sorted { $0.daysSinceWorn > $1.daysSinceWorn }
+                            .prefix(10)
+                        if !forgotten.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Not worn lately")
+                                    .font(.headline)
+                                    .foregroundColor(.ooBrown)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(Array(forgotten)) { item in
+                                            Button {
+                                                selectedItem = item
+                                            } label: {
+                                                ItemThumbnail(item: item, height: 80)
+                                                    .frame(width: 76)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
                     }
                     .padding(.vertical)
                 }
@@ -248,10 +311,16 @@ struct ContentView: View {
                 .toolbar(.visible, for: .navigationBar)
             }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
         .task { await appState.loadWeather() }
         .sheet(isPresented: $showToday) { TodayOutfitView() }
         .sheet(isPresented: $showLucky) { TodayOutfitView(lucky: true) }
         .sheet(isPresented: $showStats) { StatsView() }
+        .sheet(item: $selectedItem) { ItemDetailView(item: $0) }
+        .task(id: items.count) {
+            await appState.loadWeather()
+            todayPick = await ClosetContext(items: items, logs: logs)
+                .suggest(weather: appState.weather, count: 1).first
+        }
     }
 }

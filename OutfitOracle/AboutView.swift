@@ -25,7 +25,7 @@ struct AboutView: View {
                 Color.ooCream.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Image("Outfit_Oracle")
+                        Image("OracleLogo")
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: 240)
@@ -77,7 +77,7 @@ struct AboutView: View {
             }
             .safariSheet(url: $safariURL)
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 
     private func card<Content: View>(_ title: String, color: Color, @ViewBuilder content: () -> Content) -> some View {

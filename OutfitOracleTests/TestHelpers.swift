@@ -41,7 +41,7 @@ let denimLook = TrendLook(
 /// Fresh in-memory SwiftData store (never touches the real closet)
 @MainActor
 func makeInMemoryContainer() throws -> ModelContainer {
-    let schema = Schema([WardrobeItem.self, WearLog.self])
+    let schema = Schema([WardrobeItem.self, WearLog.self, SavedOutfit.self])
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     return try ModelContainer(for: schema, configurations: [config])
 }

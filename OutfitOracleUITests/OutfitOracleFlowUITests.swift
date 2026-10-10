@@ -22,7 +22,6 @@ final class OutfitOracleFlowUITests: XCTestCase {
 
     @MainActor
     func testAllTabsOpen() {
-        let tabs = app.tabBars.firstMatch
         let expectations: [(tab: String, marker: XCUIElement)] = [
             ("Camera", app.buttons["Upload"]),
             ("Chat", app.textFields["Ask the Oracle..."]),
@@ -31,15 +30,15 @@ final class OutfitOracleFlowUITests: XCTestCase {
             ("Profile", app.buttons["Settings"]),
         ]
         for (tab, marker) in expectations {
-            tabs.buttons[tab].tap()
+            app.tabBars.buttons[tab].tap()
             XCTAssertTrue(marker.waitForExistence(timeout: 5), "\(tab) tab didn't load")
         }
     }
 
     @MainActor
     func testClosetFiltersByType() {
-        app.tabBars.firstMatch.buttons["Closet"].tap()
-        XCTAssertTrue(app.staticTexts["14 items"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Closet"].tap()
+        XCTAssertTrue(app.staticTexts["22 items"].waitForExistence(timeout: 5))
 
         app.buttons["Tops"].tap()
         XCTAssertTrue(app.staticTexts["Red knit sweater"].exists)
@@ -52,7 +51,7 @@ final class OutfitOracleFlowUITests: XCTestCase {
 
     @MainActor
     func testWearArchiveAndRestoreAnItem() {
-        app.tabBars.firstMatch.buttons["Closet"].tap()
+        app.tabBars.buttons["Closet"].tap()
         app.buttons["Tops"].tap()
         app.staticTexts["Red knit sweater"].firstMatch.tap()
 
@@ -70,10 +69,10 @@ final class OutfitOracleFlowUITests: XCTestCase {
         archive.tap()
 
         app.buttons["All"].tap()
-        XCTAssertTrue(app.staticTexts["13 items"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["21 items"].waitForExistence(timeout: 5))
 
         // Restore from Profile ▸ Archives
-        app.tabBars.firstMatch.buttons["Profile"].tap()
+        app.tabBars.buttons["Profile"].tap()
         app.buttons["Archives"].tap()
         let restore = app.buttons["Restore"]
         XCTAssertTrue(restore.waitForExistence(timeout: 5))
@@ -81,8 +80,8 @@ final class OutfitOracleFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Nothing archived"].waitForExistence(timeout: 3))
         app.buttons["Done"].tap()
 
-        app.tabBars.firstMatch.buttons["Closet"].tap()
-        XCTAssertTrue(app.staticTexts["14 items"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Closet"].tap()
+        XCTAssertTrue(app.staticTexts["22 items"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -111,7 +110,7 @@ final class OutfitOracleFlowUITests: XCTestCase {
 
     @MainActor
     func testChatAnswersATypedQuestion() {
-        app.tabBars.firstMatch.buttons["Chat"].tap()
+        app.tabBars.buttons["Chat"].tap()
         let field = app.textFields["Ask the Oracle..."]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.tap()
@@ -124,7 +123,7 @@ final class OutfitOracleFlowUITests: XCTestCase {
 
     @MainActor
     func testManualModeForShoesAndAccessories() {
-        app.tabBars.firstMatch.buttons["Camera"].tap()
+        app.tabBars.buttons["Camera"].tap()
         app.buttons["Add shoes or accessories manually"].tap()
         XCTAssertTrue(app.staticTexts["Adding shoes or accessories"].waitForExistence(timeout: 3))
         app.buttons["Back to auto-detect"].tap()

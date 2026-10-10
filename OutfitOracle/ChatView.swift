@@ -23,6 +23,7 @@ struct ChatView: View {
     @Query(sort: \WearLog.date, order: .reverse) private var logs: [WearLog]
 
     @State private var messageText = ""
+    @FocusState private var inputFocused: Bool
     @State private var oracle = OracleChat()
     @State private var isThinking = false
     @State private var showTrends = false
@@ -69,7 +70,7 @@ struct ChatView: View {
                                 VStack(spacing: 10) {
                                     ChatBubble(text: message.text, isUser: message.isUser)
                                     ForEach(message.outfits) { outfit in
-                                        OutfitCard(outfit: outfit, lookup: lookup)
+                                        OutfitCard(outfit: outfit, lookup: lookup, previewHeight: 200)
                                             .padding(.trailing, 40)
                                     }
                                 }
@@ -79,15 +80,40 @@ struct ChatView: View {
                                 ChatBubble(text: "…", isUser: false)
                                     .id("thinking")
                             }
+
+                            // Before the first question, show starters right here
+                            if messages.count == 1 && !isThinking {
+                                VStack(spacing: 10) {
+                                    ForEach(suggestions, id: \.self) { suggestion in
+                                        Button {
+                                            send(suggestion)
+                                        } label: {
+                                            HStack {
+                                                Text(suggestion)
+                                                Spacer()
+                                                Image(systemName: "arrow.up.circle.fill")
+                                            }
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundColor(.ooBrown)
+                                            .padding(14)
+                                            .background(Color.ooButter)
+                                            .cornerRadius(16)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
                         }
                         .padding()
                     }
+                    .scrollDismissesKeyboard(.interactively)   // swipe down on the chat to close the keyboard
                     .onChange(of: messages.count) { _, _ in
                         withAnimation { proxy.scrollTo(messages.last?.id, anchor: .top) }
                     }
                 }
 
-                // Quick prompts
+                // Quick prompts (after the first question; before that they're shown above)
+                if messages.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(suggestions, id: \.self) { suggestion in
@@ -101,13 +127,27 @@ struct ChatView: View {
                 .padding(.top, 6)
                 .background(Color.ooCream)
                 .disabled(isThinking)
+                }
 
                 // Input bar
                 HStack {
                     TextField("Ask the Oracle...", text: $messageText)
                         .padding(12)
                         .submitLabel(.send)
+                        .focused($inputFocused)
                         .onSubmit { send(messageText) }
+
+                    if inputFocused {
+                        Button {
+                            inputFocused = false
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.title3)
+                                .foregroundColor(.ooBrown)
+                                .padding(6)
+                        }
+                        .accessibilityLabel("Hide keyboard")
+                    }
 
                     Button {
                         send(messageText)
@@ -115,7 +155,7 @@ struct ChatView: View {
                         Image(systemName: "paperplane.fill")
                             .foregroundColor(.white)
                             .padding(10)
-                            .background(Color.brown)
+                            .background(Color.ooBrown)
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Send")
@@ -138,7 +178,7 @@ struct ChatView: View {
                         }
                     }
             }
-            .tint(.brown)
+            .tint(.ooBrown)
         }
     }
 
@@ -154,7 +194,7 @@ struct ChatView: View {
             closet: closet.snapshots,
             looks: trends.looks,
             weather: appState.weather,
-            favoriteColors: UserDefaults.standard.favoriteColors,
+            preferences: .current,
             recentSets: closet.recentSets
         )
 
@@ -176,8 +216,8 @@ struct ChatView: View {
 
                 Text(text)
                     .padding()
-                    .foregroundColor(.black)
-                    .background(isUser ? Color.blue.opacity(0.6) : Color.pink.opacity(0.4))
+                    .foregroundColor(isUser ? .ooLightText : .ooDeepBrown)
+                    .background(isUser ? Color.ooBrown : Color.ooLatte)
                     .cornerRadius(20)
                     .frame(maxWidth: 280, alignment: isUser ? .trailing : .leading)
 

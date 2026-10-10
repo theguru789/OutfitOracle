@@ -39,6 +39,12 @@ nonisolated struct WeatherSnapshot: Sendable, Equatable {
     var isHot: Bool { highC > 26 }
 }
 
+nonisolated struct OutfitAdvice: Sendable {
+    let text: String
+    /// The improved set of pieces, if there's a change worth making
+    let change: [ItemSnapshot]?
+}
+
 nonisolated struct Outfit: Identifiable, Sendable {
     let id = UUID()
     let items: [ItemSnapshot]
@@ -143,12 +149,13 @@ nonisolated final class OutfitEngine: @unchecked Sendable {
         weather: WeatherSnapshot? = nil,
         favoriteColors: Set<String> = [],
         recentlyWorn: [Set<UUID>] = [],
+        preferences: StylePreferences = .none,
         count: Int = 5
     ) async -> [Outfit] {
         let candidates = Self.candidateSets(from: items)
         let scored = candidates.map { set in
             score(set, trend: trend, weather: weather,
-                  favoriteColors: favoriteColors, recentlyWorn: recentlyWorn)
+                  favoriteColors: favoriteColors, recentlyWorn: recentlyWorn, preferences: preferences)
         }
         return Self.diversePick(scored.sorted { $0.score > $1.score }, count: count)
     }
@@ -208,7 +215,8 @@ nonisolated final class OutfitEngine: @unchecked Sendable {
         trend: TrendLook?,
         weather: WeatherSnapshot?,
         favoriteColors: Set<String>,
-        recentlyWorn: [Set<UUID>]
+        recentlyWorn: [Set<UUID>],
+        preferences: StylePreferences = .none
     ) -> Outfit {
         let base = modelScore(set)
         var total = base
@@ -247,6 +255,9 @@ nonisolated final class OutfitEngine: @unchecked Sendable {
         let favoriteHits = set.filter { favoriteColors.contains($0.color) }.count
         total += 0.03 * Double(favoriteHits)
 
+        // What the user wrote about their style ("no leather", "earthy colors"…)
+        total += preferences.adjustment(for: set)
+
         // Don't repeat the exact same look within a week
         let ids = Set(set.map(\.id))
         if recentlyWorn.contains(ids) {
@@ -256,6 +267,70 @@ nonisolated final class OutfitEngine: @unchecked Sendable {
 
         reasons.insert("\(Int((min(max(base, 0), 1) * 100).rounded()))% style match", at: 0)
         return Outfit(items: set, modelScore: base, score: total, reasons: reasons)
+    }
+
+    // MARK: Recommendations for a saved outfit
+    /// Tries every swap (same type of piece) and every missing layer/shoe/accessory
+    /// from the closet, and returns the single change that raises the match most.
+    func recommendation(for set: [ItemSnapshot], closet: [ItemSnapshot],
+                        weather: WeatherSnapshot? = nil) -> OutfitAdvice {
+        let current = Self.normalized(set)
+        guard !current.isEmpty else { return OutfitAdvice(text: "Add a few pieces to get a recommendation.", change: nil) }
+        let base = modelScore(current)
+        let used = Set(current.map(\.id))
+        var best: (score: Double, set: [ItemSnapshot], text: String)?
+
+        func consider(_ candidate: [ItemSnapshot], _ text: String) {
+            let normalizedCandidate = Self.normalized(candidate)
+            var score = modelScore(normalizedCandidate)
+            // Weather nudges: a layer when it's cold, no layer when it's hot
+            if let weather {
+                let hasLayer = normalizedCandidate.contains { $0.role == .outerwear }
+                if weather.isCold && hasLayer { score += 0.04 }
+                if weather.isHot && hasLayer { score -= 0.06 }
+            }
+            if score > (best?.score ?? base) { best = (score, normalizedCandidate, text) }
+        }
+
+        // Swap a piece for another of the same type
+        for (index, piece) in current.enumerated() {
+            for other in closet where other.role == piece.role && !used.contains(other.id) {
+                var swapped = current
+                swapped[index] = other
+                consider(swapped, "Swap your \(piece.name.lowercased()) for your \(other.name.lowercased())")
+            }
+        }
+        // Add a missing layer / shoes / accessory (scorer looks at up to 4 pieces)
+        if current.count < ScorerEncoder.maxItems {
+            let roles = Set(current.map(\.role))
+            for role in [GarmentRole.outerwear, .shoes, .accessory] where !roles.contains(role) {
+                for other in closet where other.role == role && !used.contains(other.id) {
+                    consider(current + [other], "Add your \(other.name.lowercased())")
+                }
+            }
+        }
+
+        let basePercent = Int((min(max(base, 0), 1) * 100).rounded())
+        if let best, best.score - base >= 0.03 {
+            let gain = Int(((best.score - base) * 100).rounded())
+            return OutfitAdvice(text: "\(best.text) (+\(gain)% match)", change: best.set)
+        }
+        return OutfitAdvice(text: basePercent >= 70 ? "Great combo, already a strong match!" : "This is your best version with what you own. Try it with a different top.",
+                            change: nil)
+    }
+
+    /// Sorted in the order the scorer expects, max 4 pieces
+    static func normalized(_ set: [ItemSnapshot]) -> [ItemSnapshot] {
+        Array(set.sorted { ScorerEncoder.polyvoreOrder($0.role) < ScorerEncoder.polyvoreOrder($1.role) }
+            .prefix(ScorerEncoder.maxItems))
+    }
+
+    /// A friendly default name for a new outfit, e.g. "Olive layered look"
+    static func suggestedName(for set: [ItemSnapshot]) -> String {
+        let main = set.first { $0.role == .dress } ?? set.first { $0.role == .top } ?? set.first
+        let color = main.map { $0.color == "unknown" ? "" : $0.color.capitalizedFirst + " " } ?? ""
+        let style = set.contains { $0.role == .outerwear } ? "layered look" : (set.contains { $0.role == .dress } ? "dress look" : "everyday look")
+        return (color + style).capitalizedFirst
     }
 
     /// Fallback when the Core ML model isn't available: simple color / pattern harmony

@@ -23,8 +23,7 @@ final class OutfitOracleUITests: XCTestCase {
         app.launchArguments = ["-demoCloset"]
         app.launch()
 
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 10))
         snapshot("1-Home", app)
 
         // What should I wear today?
@@ -52,25 +51,25 @@ final class OutfitOracleUITests: XCTestCase {
         snapshot("5-TrendDetail", app)
 
         // Closet
-        tabBar.buttons["Closet"].tap()
+        app.tabBars.buttons["Closet"].tap()
         XCTAssertTrue(app.staticTexts["My Closet"].waitForExistence(timeout: 5))
         snapshot("6-Closet", app)
         app.buttons["Tops"].tap()
         snapshot("7-Closet-Tops", app)
 
         // Chat (rule-based Oracle in the Simulator unless Apple Intelligence is on)
-        tabBar.buttons["Chat"].tap()
+        app.tabBars.buttons["Chat"].tap()
         app.buttons["What should I wear today?"].tap()
         XCTAssertTrue(app.staticTexts["style match"].firstMatch.waitForExistence(timeout: 30))
         snapshot("8-Chat", app)
 
         // Camera
-        tabBar.buttons["Camera"].tap()
+        app.tabBars.buttons["Camera"].tap()
         XCTAssertTrue(app.buttons["Upload"].waitForExistence(timeout: 5))
         snapshot("9-Camera", app)
 
         // Profile
-        tabBar.buttons["Profile"].tap()
+        app.tabBars.buttons["Profile"].tap()
         XCTAssertTrue(app.buttons["Settings"].waitForExistence(timeout: 5))
         snapshot("10-Profile", app)
     }

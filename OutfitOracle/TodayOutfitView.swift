@@ -49,7 +49,7 @@ struct TodayOutfitView: View {
 
                     if isLoading {
                         Spacer()
-                        ProgressView("Consulting the Oracle…").tint(.brown)
+                        ProgressView("Consulting the Oracle…").tint(.ooBrown)
                         Spacer()
                     } else if outfits.isEmpty {
                         Spacer()
@@ -101,7 +101,7 @@ struct TodayOutfitView: View {
             }
             .task { await load(context) }
         }
-        .tint(.brown)
+        .tint(.ooBrown)
     }
 
     private var emptyState: some View {

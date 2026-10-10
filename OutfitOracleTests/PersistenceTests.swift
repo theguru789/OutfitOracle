@@ -74,13 +74,24 @@ struct PersistenceTests {
 
         let items = try context.fetch(FetchDescriptor<WardrobeItem>())
         let logs = try context.fetch(FetchDescriptor<WearLog>())
-        #expect(items.count == 14)
+        let outfits = try context.fetch(FetchDescriptor<SavedOutfit>())
+        #expect(items.count == 22)
         #expect(logs.count == 3)
-        #expect(Set(items.map(\.role)) == Set(GarmentRole.allCases))
+        #expect(outfits.count == 2)
+        // Men's test closet: every type of piece except dresses
+        #expect(Set(items.map(\.role)) == Set(GarmentRole.allCases).subtracting([.dress]))
         #expect(items.contains { $0.isForgotten })
-        #expect(items.allSatisfy { $0.croppedImage != nil })
+        // Every sample is a real photo with the background already removed
+        #expect(items.allSatisfy { $0.cutoutImageData != nil && $0.cutoutImage != nil })
         // A memory for "One year ago today"
         let yearAgo = Calendar.current.date(byAdding: .year, value: -1, to: Date())!
         #expect(logs.contains { abs($0.date.timeIntervalSince(yearAgo)) < 86_400 })
+    }
+
+    @Test func loadingTwiceDoesNotDuplicate() throws {
+        SampleData.load(into: context)
+        SampleData.load(into: context)
+        #expect(try context.fetchCount(FetchDescriptor<WardrobeItem>()) == 22)
+        #expect(try context.fetchCount(FetchDescriptor<SavedOutfit>()) == 2)
     }
 }

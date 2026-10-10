@@ -10,12 +10,16 @@ import SwiftUI
 
 extension Color {
     static let ooCream     = Color(red: 0.94, green: 0.92, blue: 0.87)
-    static let ooBrown     = Color.brown
+    static let ooBrown     = Color(red: 0.42, green: 0.28, blue: 0.18)   // espresso (richer than system brown)
     static let ooButter    = Color(red: 0.95, green: 0.90, blue: 0.55)
     static let ooLightText = Color(red: 0.98, green: 0.95, blue: 0.90)
-    static let ooPink      = Color.pink.opacity(0.4)
-    static let ooBlue      = Color.blue.opacity(0.4)
+    static let ooPink      = Color(red: 0.80, green: 0.53, blue: 0.52)   // dusty rose
+    static let ooBlue      = Color(red: 0.45, green: 0.58, blue: 0.72)   // muted denim
+    static let ooGold      = Color(red: 0.96, green: 0.80, blue: 0.36)   // selected tab / highlights
     static let ooChatInput = Color(red: 0.97, green: 0.95, blue: 0.70)
+    /// Chat: warm latte for the Oracle, deep brown text for readability
+    static let ooLatte     = Color(red: 0.92, green: 0.85, blue: 0.76)
+    static let ooDeepBrown = Color(red: 0.36, green: 0.23, blue: 0.14)
 
     /// Builds a Color from "#RRGGBB" (used for trend palettes + item swatches)
     init(hex: String) {
@@ -45,7 +49,8 @@ struct OOHeader<Trailing: View>: View {
             Spacer()
             trailing()
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
         .background(Color.ooBrown)
     }
@@ -84,8 +89,8 @@ struct OOButtonStyle: ButtonStyle {
             .font(.title2.weight(.bold))
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.brown.opacity(configuration.isPressed ? 0.7 : 0.5))
-            .foregroundColor(.white)
+            .background(Color.ooBrown.opacity(configuration.isPressed ? 0.8 : 1))
+            .foregroundColor(.ooLightText)
             .cornerRadius(25)
     }
 }
@@ -97,6 +102,24 @@ extension View {
             .padding(10)
             .background(color)
             .cornerRadius(radius)
+    }
+}
+
+// MARK: - "Done" button above the keyboard
+extension View {
+    /// Adds a Done button on top of the keyboard that closes it.
+    /// (Needs to be inside a NavigationStack to show.)
+    func keyboardDoneButton() -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                    to: nil, from: nil, for: nil)
+                }
+                .bold()
+            }
+        }
     }
 }
 
@@ -121,7 +144,15 @@ struct ItemThumbnail: View {
 
     var body: some View {
         Group {
-            if let image = item.croppedImage {
+            if item.cutoutImageData != nil, let image = item.cutoutImage {
+                // Background removed: show the whole garment on a soft card
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(8)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.white.opacity(0.6))
+            } else if let image = item.croppedImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()

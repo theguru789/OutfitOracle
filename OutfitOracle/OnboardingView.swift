@@ -2,8 +2,8 @@
 //  OnboardingView.swift
 //  OutfitOracle
 //
-//  First-launch intro: the mission, how the app works, a quick style quiz
-//  (from the original proposal), and how your data stays on your phone.
+//  First-launch intro, kept short: mission, a quick animated "how it works",
+//  about you (name + male/female), your style (quiz + your own words), privacy.
 //
 
 import SwiftData
@@ -15,11 +15,14 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState
     @AppStorage(PrefKeys.name) private var name = ""
+    @AppStorage(PrefKeys.gender) private var genderRaw = Gender.unspecified.rawValue
     @AppStorage(PrefKeys.favoriteColors) private var favoriteColorsRaw = ""
     @AppStorage(PrefKeys.styles) private var stylesRaw = ""
+    @AppStorage(PrefKeys.styleNotes) private var styleNotes = ""
     @State private var page = 0
+    @State private var showGuide = false
 
-    private let pageCount = 4
+    private let pageCount = 5
 
     var body: some View {
         ZStack {
@@ -29,8 +32,9 @@ struct OnboardingView: View {
                 TabView(selection: $page) {
                     welcome.tag(0)
                     howItWorks.tag(1)
-                    styleQuiz.tag(2)
-                    privacy.tag(3)
+                    aboutYou.tag(2)
+                    yourStyle.tag(3)
+                    privacy.tag(4)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
@@ -63,7 +67,6 @@ struct OnboardingView: View {
                     .padding(.horizontal)
                     Button("Try it with a sample closet") {
                         SampleData.load(into: modelContext)
-                        appState.selectedTab = .home
                         onFinish()
                     }
                     .font(.subheadline.weight(.semibold))
@@ -73,155 +76,159 @@ struct OnboardingView: View {
             }
             .padding(.bottom, 8)
         }
+        .sheet(isPresented: $showGuide) { HowItWorksGuideView() }
     }
 
-    // MARK: - Pages
+    // MARK: - Pages (one or two short lines each)
 
-    private var welcome: some View {
+    /// Scrolls only if it truly has to (big text / small phones) and flashes the
+    /// scroll bar so nothing is ever silently hidden below the dots.
+    private func pageContainer<Content: View>(alignment: HorizontalAlignment = .leading,
+                                             @ViewBuilder content: () -> Content) -> some View {
         ScrollView {
-            VStack(spacing: 20) {
-                Image("Outfit_Oracle")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 300)
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-                    .accessibilityLabel("Outfit Oracle logo")
-                    .padding(.top, 40)
-
-                Text("Smarter wardrobes.\nSustainable choices.\nConfident you.")
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.ooBrown)
-
-                VStack(spacing: 6) {
-                    Text("92 million tons")
-                        .font(.largeTitle.bold())
-                        .foregroundColor(.ooBrown)
-                    Text("of textile waste are produced every year. Most of it starts with clothes we buy and barely wear.")
-                        .font(.subheadline)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.ooBrown.opacity(0.85))
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.ooButter)
-                .cornerRadius(25)
-
-                Text("Outfit Oracle helps you love what you already own.")
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.ooBrown)
+            VStack(alignment: alignment, spacing: 14) {
+                content()
             }
             .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollIndicatorsFlash(onAppear: true)
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var welcome: some View {
+        pageContainer(alignment: .center) {
+            Spacer(minLength: 24)
+            Image("OracleLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 260, maxHeight: 143)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .accessibilityLabel("Outfit Oracle logo")
+
+            Text("Love what you already own.")
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+                .foregroundColor(.ooBrown)
+
+            Label("92 million tons of clothes are thrown away every year.", systemImage: "leaf.fill")
+                .font(.subheadline)
+                .multilineTextAlignment(.leading)
+                .foregroundColor(.ooDeepBrown)
+                .padding(12)
+                .frame(maxWidth: .infinity)
+                .background(Color.ooButter)
+                .cornerRadius(18)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var howItWorks: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("How it works")
-                    .font(.largeTitle.bold())
+        pageContainer {
+            pageTitle("How it works")
+            AppSimulationView(height: 270)
+            Button {
+                showGuide = true
+            } label: {
+                Label("See how it works in detail", systemImage: "book")
+                    .font(.subheadline.bold())
                     .foregroundColor(.ooBrown)
-                    .padding(.top, 40)
-
-                step(1, "camera.viewfinder", "Snap your clothes",
-                     "On-device AI finds each piece and reads its type, color, pattern and fabric.", .ooBlue)
-                step(2, "sparkles", "Remix what you own",
-                     "Get outfits for today's weather, plus a nudge to re-wear pieces you've forgotten.", Color.ooPink)
-                step(3, "leaf", "Wear the trends, waste less",
-                     "See how much of each trend you already own. If one piece is missing, shop secondhand first.", .ooButter)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.ooButter)
+                    .cornerRadius(16)
             }
-            .padding(.horizontal, 24)
         }
     }
 
-    private var styleQuiz: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Your style")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(.ooBrown)
-                    .padding(.top, 40)
-                Text("A quick quiz so the Oracle can personalize your outfits. You can change this later in Settings.")
-                    .font(.subheadline)
-                    .foregroundColor(.ooBrown.opacity(0.85))
+    private var aboutYou: some View {
+        pageContainer {
+            pageTitle("About you")
 
-                TextField("Your first name", text: $name)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.givenName)
+            TextField("Your first name", text: $name)
+                .textFieldStyle(.roundedBorder)
+                .textContentType(.givenName)
+                .submitLabel(.done)   // Return closes the keyboard
 
-                Text("Colors you love").font(.headline).foregroundColor(.ooBrown)
-                FlowChips(options: Vocabulary.colors, selected: setBinding($favoriteColorsRaw)) { color in
-                    HStack(spacing: 4) {
-                        ColorSwatch(hex: Vocabulary.hex(for: color), size: 12)
-                        Text(color.capitalizedFirst)
+            Text("I am…").font(.headline).foregroundColor(.ooBrown)
+            VStack(spacing: 10) {
+                ForEach(Gender.allCases) { gender in
+                    let isOn = genderRaw == gender.rawValue
+                    Button {
+                        genderRaw = gender.rawValue
+                    } label: {
+                        HStack {
+                            Text(gender.label)
+                            Spacer()
+                            if isOn { Image(systemName: "checkmark.circle.fill") }
+                        }
+                        .font(.body.weight(.semibold))
+                        .padding()
+                        .background(isOn ? Color.ooBrown : Color.ooButter)
+                        .foregroundColor(isOn ? .ooLightText : .ooBrown)
+                        .cornerRadius(16)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
                 }
-
-                Text("Styles that feel like you").font(.headline).foregroundColor(.ooBrown)
-                FlowChips(options: SettingsView.styleOptions, selected: setBinding($stylesRaw)) { Text($0) }
             }
-            .padding(.horizontal, 24)
+            Text("Used to show the right section in shop links.")
+                .font(.caption)
+                .foregroundColor(.ooBrown.opacity(0.8))
+        }
+    }
+
+    private var yourStyle: some View {
+        pageContainer {
+            pageTitle("Your style")
+
+            Text("Colors you love").font(.headline).foregroundColor(.ooBrown)
+            FlowChips(options: Vocabulary.colors, selected: setBinding($favoriteColorsRaw), minWidth: 70) { color in
+                HStack(spacing: 4) {
+                    ColorSwatch(hex: Vocabulary.hex(for: color), size: 10)
+                    Text(color.capitalizedFirst)
+                }
+            }
+
+            Text("Styles").font(.headline).foregroundColor(.ooBrown)
+            FlowChips(options: SettingsView.styleOptions, selected: setBinding($stylesRaw), minWidth: 70) { Text($0) }
+
+            Text("In your own words").font(.headline).foregroundColor(.ooBrown)
+            TextField("e.g. comfy, earthy colors, no leather", text: $styleNotes)
+                .textFieldStyle(.roundedBorder)
+                .submitLabel(.done)
         }
     }
 
     private var privacy: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Private by design")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(.ooBrown)
-                    .padding(.top, 40)
-
-                privacyRow("iphone", "Your closet stays on your phone",
-                           "Photos and outfits are saved only on this device. There's no account and no cloud upload.")
-                privacyRow("cpu", "The AI runs on-device",
-                           "Clothing detection, outfit scoring and chat all happen on your iPhone.")
-                privacyRow("location", "Only approximate location, only for weather",
-                           "Used to check today's temperature. You can say no, and everything else still works.")
-            }
-            .padding(.horizontal, 24)
+        pageContainer {
+            pageTitle("Private by design")
+            privacyRow("iphone", "Your closet stays on your phone.")
+            privacyRow("cpu", "The AI runs on-device.")
+            privacyRow("location", "Location is only used for weather.")
         }
     }
 
     // MARK: - Pieces
 
-    private func step(_ number: Int, _ symbol: String, _ title: String, _ text: String, _ color: Color) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol)
-                .font(.title2)
-                .frame(width: 48, height: 48)
-                .background(color)
-                .clipShape(Circle())
-                .foregroundColor(.ooBrown)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(number). \(title)").font(.headline)
-                Text(text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
-            }
+    private func pageTitle(_ text: String) -> some View {
+        Text(text)
+            .font(.largeTitle.bold())
             .foregroundColor(.ooBrown)
-        }
-        .accessibilityElement(children: .combine)
+            .minimumScaleFactor(0.8)
+            .lineLimit(1)
     }
 
-    private func privacyRow(_ symbol: String, _ title: String, _ text: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol)
-                .font(.title3)
-                .frame(width: 32)
-                .foregroundColor(.ooBrown)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline)
-                Text(text).font(.subheadline).fixedSize(horizontal: false, vertical: true)
-            }
+    private func privacyRow(_ symbol: String, _ text: String) -> some View {
+        Label(text, systemImage: symbol)
+            .font(.headline)
             .foregroundColor(.ooBrown)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.ooButter)
-        .cornerRadius(20)
-        .accessibilityElement(children: .combine)
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.ooButter)
+            .cornerRadius(18)
     }
 
     private func setBinding(_ raw: Binding<String>) -> Binding<Set<String>> {
