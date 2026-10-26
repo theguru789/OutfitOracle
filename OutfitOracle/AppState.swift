@@ -28,15 +28,7 @@ final class AppState {
     /// The very first launch opens the Camera (so people start by snapping their
     /// closet); every launch after that opens Home. Demo/test runs always open Home.
     nonisolated static func launchTab(isDemo: Bool, defaults: UserDefaults) -> AppTab {
-        if isDemo {
-            // `-startTab closet` etc. opens a specific tab (handy for demo screenshots)
-            let args = ProcessInfo.processInfo.arguments
-            if let i = args.firstIndex(of: "-startTab"), i + 1 < args.count,
-               let tab = AppTab.allCases.first(where: { "\($0)" == args[i + 1] }) {
-                return tab
-            }
-            return .home
-        }
+        if isDemo { return .home }
         // Installs from before this flag existed already finished onboarding, so they count as launched
         let launchedBefore = defaults.bool(forKey: PrefKeys.hasLaunchedBefore)
             || defaults.bool(forKey: PrefKeys.hasOnboarded)
@@ -76,6 +68,7 @@ nonisolated enum PrefKeys {
     static let hasLaunchedBefore = "hasLaunchedBefore"
     static let gender = "gender"              // Gender.rawValue
     static let styleNotes = "styleNotes"      // free-text style preferences
+    static let styleQuiz = "styleQuizAnswers" // StyleQuiz.Answers as JSON (empty = not taken yet)
 }
 
 nonisolated extension UserDefaults {

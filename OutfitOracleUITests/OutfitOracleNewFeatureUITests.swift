@@ -13,6 +13,17 @@ final class OnboardingUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Opens the quiz from the intro's style page and skips every question
+    private func takeQuizSkippingEverything(_ app: XCUIApplication) {
+        app.buttons["Take the style quiz"].tap()
+        XCTAssertTrue(app.staticTexts["What's your everyday vibe?"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["Later"].exists, "the intro quiz is required")
+        for _ in 0..<6 { app.buttons["Skip question"].tap() }
+        app.buttons["See my style"].tap()
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 3))
+        app.buttons["Done"].tap()
+    }
+
     @MainActor
     func testOnboardingQuizSavesNameAndOpensCamera() {
         let app = XCUIApplication()
@@ -33,13 +44,31 @@ final class OnboardingUITests: XCTestCase {
         app.buttons["Male"].tap()
         app.buttons["Next"].tap()
 
-        // Your style: chips + own words
+        // Your style: the quiz (answer two questions, skip the rest)
         XCTAssertTrue(app.staticTexts["Your style"].waitForExistence(timeout: 3))
-        app.buttons["Green"].tap()
-        let notes = app.textFields["e.g. comfy, earthy colors, no leather"]
-        notes.tap()
-        notes.typeText("comfy, no leather\n")
+        app.buttons["Take the style quiz"].tap()
+        XCTAssertTrue(app.staticTexts["What's your everyday vibe?"].waitForExistence(timeout: 3))
+        app.buttons["Casual"].tap()
+        app.buttons["Minimal"].tap()
         app.buttons["Next"].tap()
+        XCTAssertTrue(app.staticTexts["Which colors do you reach for?"].waitForExistence(timeout: 3))
+        app.buttons["Skip question"].tap()                       // colors
+        app.buttons["Skip question"].tap()                       // patterns
+        app.buttons["Skip question"].tap()                       // feel
+        XCTAssertTrue(app.staticTexts["Anything you'd never wear?"].waitForExistence(timeout: 3))
+        app.buttons["Leather"].tap()
+        app.buttons["Next"].tap()
+        app.buttons["Skip question"].tap()                       // occasion
+        // The only text box on this step. (Not looked up by its placeholder: notes
+        // saved by an earlier run fill the box and hide the placeholder.)
+        let notes = app.textFields.firstMatch
+        XCTAssertTrue(notes.waitForExistence(timeout: 3))
+        notes.tap()
+        notes.typeText("comfy")
+        app.buttons["See my style"].tap()
+        XCTAssertTrue(app.staticTexts["Casual & Minimal"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Leather"].exists)
+        app.buttons["Done"].tap()
 
         XCTAssertTrue(app.staticTexts["Private by design"].waitForExistence(timeout: 3))
         app.buttons["Snap my closet"].tap()
@@ -48,6 +77,41 @@ final class OnboardingUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Upload"].waitForExistence(timeout: 5))
         app.tabBars.buttons["Profile"].tap()
         XCTAssertTrue(app.buttons["Guru"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Your style: Casual & Minimal"].exists)
+    }
+
+    @MainActor
+    func testStyleQuizIsRequired() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-demoCloset", "-showOnboarding"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["Next"].waitForExistence(timeout: 10))
+        app.buttons["Next"].tap()
+        app.buttons["Next"].tap()
+        app.buttons["Next"].tap()
+
+        // No way past the style page without the quiz: no "Do it later", and swiping bounces back
+        XCTAssertTrue(app.buttons["Take the style quiz"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["Do it later"].exists)
+        app.swipeLeft()
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertTrue(app.buttons["Take the style quiz"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Private by design"].isHittable)
+
+        takeQuizSkippingEverything(app)
+        XCTAssertTrue(app.staticTexts["Private by design"].waitForExistence(timeout: 3))
+        app.buttons["Snap my closet"].tap()
+
+        // Profile shows the result; a retake from there can be closed with "Later"
+        XCTAssertTrue(app.tabBars.buttons["Profile"].waitForExistence(timeout: 5))
+        app.tabBars.buttons["Profile"].tap()
+        let card = app.buttons.containing(NSPredicate(format: "label CONTAINS 'Your style'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        XCTAssertTrue(app.buttons["Later"].waitForExistence(timeout: 3))
+        app.buttons["Later"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 3))
     }
 
     /// Screenshots each intro page (Report navigator ▸ Attachments) and checks the
@@ -62,7 +126,7 @@ final class OnboardingUITests: XCTestCase {
             "92 million tons of clothes are thrown away every year.",
             "See how it works in detail",
             "Used to show the right section in shop links.",
-            "In your own words",
+            "About a minute. Skip any question you like.",
             "Location is only used for weather.",
         ]
         XCTAssertTrue(app.buttons["Next"].waitForExistence(timeout: 10))
@@ -75,22 +139,33 @@ final class OnboardingUITests: XCTestCase {
 
             let element = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", line)).firstMatch
             XCTAssertTrue(element.waitForExistence(timeout: 3), "page \(index + 1): '\(line)' missing")
-            let button = index < lastLines.count - 1 ? app.buttons["Next"] : app.buttons["Snap my closet"]
+            // The style page swaps Next for the (required) quiz button
+            let button = index == 3 ? app.buttons["Take the style quiz"]
+                : index < lastLines.count - 1 ? app.buttons["Next"] : app.buttons["Snap my closet"]
             XCTAssertTrue(element.isHittable, "page \(index + 1): '\(line)' is off screen")
             // Must end above the page dots that sit just over the Next button
             XCTAssertLessThanOrEqual(element.frame.maxY, button.frame.minY - 30, "page \(index + 1): '\(line)' is hidden behind the page dots/buttons")
-            if index < lastLines.count - 1 { app.buttons["Next"].tap() }
+            if index == 3 {
+                takeQuizSkippingEverything(app)   // finishing the quiz moves on to the last page
+            } else if index < lastLines.count - 1 {
+                app.buttons["Next"].tap()
+            }
         }
     }
 
     @MainActor
-    func testSkipGoesStraightToTheApp() {
+    func testSkipJumpsToTheQuizThenTheApp() {
         let app = XCUIApplication()
         app.launchArguments = ["-demoCloset", "-showOnboarding"]
         app.launch()
         XCTAssertTrue(app.buttons["Skip"].waitForExistence(timeout: 10))
         app.buttons["Skip"].tap()
-        XCTAssertTrue(app.buttons["Explore trends"].waitForExistence(timeout: 5))
+        // Skip passes the intro pages but stops at the required quiz
+        XCTAssertTrue(app.buttons["Take the style quiz"].waitForExistence(timeout: 5))
+        takeQuizSkippingEverything(app)
+        XCTAssertTrue(app.buttons["Snap my closet"].waitForExistence(timeout: 3))   // quiz done → last page
+        app.buttons["Snap my closet"].tap()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
     }
 }
 

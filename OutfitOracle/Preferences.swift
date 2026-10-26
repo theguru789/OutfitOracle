@@ -53,7 +53,22 @@ nonisolated struct StylePreferences: Sendable, Equatable {
         let defaults = UserDefaults.standard
         var prefs = parse(defaults.string(forKey: PrefKeys.styleNotes) ?? "")
         prefs.likedColors.formUnion(defaults.favoriteColors)
+        prefs.merge(StyleQuiz.preferences(from: StyleQuiz.saved))
         return prefs
+    }
+
+    /// Adds another set of likes / dislikes (e.g. the style quiz). Dislikes win.
+    mutating func merge(_ other: StylePreferences) {
+        likedColors.formUnion(other.likedColors)
+        dislikedColors.formUnion(other.dislikedColors)
+        likedPatterns.formUnion(other.likedPatterns)
+        dislikedPatterns.formUnion(other.dislikedPatterns)
+        likedFabrics.formUnion(other.likedFabrics)
+        dislikedFabrics.formUnion(other.dislikedFabrics)
+        dislikedRoles.formUnion(other.dislikedRoles)
+        likedColors.subtract(dislikedColors)
+        likedPatterns.subtract(dislikedPatterns)
+        likedFabrics.subtract(dislikedFabrics)
     }
 
     /// Words that flip what follows them (until the next comma/period) into a dislike

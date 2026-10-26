@@ -110,6 +110,10 @@ final class OracleChat {
         if !notes.isEmpty {
             instructions += "\nThe user describes their style like this: \"\(notes)\". Respect it."
         }
+        let quiz = StyleQuiz.summary(for: StyleQuiz.saved)
+        if !quiz.isEmpty {
+            instructions += "\nFrom their style quiz — \(quiz). Respect it."
+        }
         if Gender.current != .unspecified {
             instructions += "\nThe user is \(Gender.current.label.lowercased())."
         }

@@ -19,7 +19,7 @@ struct ProfileView: View {
     @State private var sheet: ProfileSheet?
 
     enum ProfileSheet: String, Identifiable {
-        case stats, settings, accessibility, archives, about, guide
+        case stats, settings, accessibility, archives, about, guide, quiz
         var id: String { rawValue }
     }
 
@@ -103,6 +103,10 @@ struct ProfileView: View {
                     .frame(maxWidth: .infinity)
                     .background(Color.ooBrown)
 
+                    // Style quiz: "take it" until done, then "Your style: … · retake"
+                    StyleQuizCard { sheet = .quiz }
+                        .padding([.horizontal, .top])
+
                     // Grid buttons
                     LazyVGrid(columns: columns, spacing: 12) {
                         ProfileCard(icon: "chart.bar.fill", title: "Stats") { sheet = .stats }
@@ -184,6 +188,7 @@ struct ProfileView: View {
             case .archives: ArchivesView()
             case .about: AboutView()
             case .guide: HowItWorksGuideView()
+            case .quiz: StyleQuizView { self.sheet = nil }
             }
         }
     }
