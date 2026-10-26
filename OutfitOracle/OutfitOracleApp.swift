@@ -14,7 +14,7 @@ struct OutfitOracleApp: App {
     @State private var appState = AppState()
     @State private var trends = TrendService.shared
 
-    /// Launch with `-demoCloset` for UI tests / demo recordings: an in-memory store
+    /// Launch with `-demoCloset` for UI tests: an in-memory store
     /// pre-filled with the sample closet (the real closet is left untouched).
     static let isDemo = ProcessInfo.processInfo.arguments.contains("-demoCloset")
 
@@ -33,6 +33,13 @@ struct OutfitOracleApp: App {
         if Self.isDemo {
             let show = ProcessInfo.processInfo.arguments.contains("-showOnboarding")
             UserDefaults.standard.set(!show, forKey: PrefKeys.hasOnboarded)
+            if show {
+                // A fresh intro forgets the last run's answers (otherwise the name field
+                // keeps growing: "GuruGuru…", and the quiz counts as already taken)
+                for key in [PrefKeys.name, PrefKeys.gender, PrefKeys.styleNotes, PrefKeys.styleQuiz] {
+                    UserDefaults.standard.removeObject(forKey: key)
+                }
+            }
         }
     }
 

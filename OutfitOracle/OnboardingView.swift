@@ -3,7 +3,7 @@
 //  OutfitOracle
 //
 //  First-launch intro, kept short: mission, a quick animated "how it works",
-//  about you (name + male/female), your style (quiz + your own words), privacy.
+//  about you (name + male/female), the style quiz (required), privacy.
 //
 
 import SwiftData
@@ -16,11 +16,12 @@ struct OnboardingView: View {
     @Environment(AppState.self) private var appState
     @AppStorage(PrefKeys.name) private var name = ""
     @AppStorage(PrefKeys.gender) private var genderRaw = Gender.unspecified.rawValue
-    @AppStorage(PrefKeys.favoriteColors) private var favoriteColorsRaw = ""
-    @AppStorage(PrefKeys.styles) private var stylesRaw = ""
-    @AppStorage(PrefKeys.styleNotes) private var styleNotes = ""
+    @AppStorage(PrefKeys.styleQuiz) private var quizData = Data()
     @State private var page = 0
     @State private var showGuide = false
+    @State private var showQuiz = false
+
+    private let stylePage = 3
 
     private let pageCount = 5
 
@@ -50,11 +51,19 @@ struct OnboardingView: View {
                 .padding(.bottom, 12)
                 .accessibilityHidden(true)
 
-                if page < pageCount - 1 {
+                if page == stylePage && quizData.isEmpty {
+                    Button("Take the style quiz") { showQuiz = true }
+                        .buttonStyle(OOButtonStyle())
+                        .padding(.horizontal)
+                        .padding(.bottom, 44)   // same height as Next + Skip, so the page doesn't jump
+                } else if page < pageCount - 1 {
                     Button("Next") { withAnimation { page += 1 } }
                         .buttonStyle(OOButtonStyle())
                         .padding(.horizontal)
-                    Button("Skip") { onFinish() }
+                    // Skip the intro, but not the style quiz
+                    Button("Skip") {
+                        if quizData.isEmpty { withAnimation { page = stylePage } } else { onFinish() }
+                    }
                         .font(.subheadline)
                         .foregroundColor(.ooBrown)
                         .padding(.vertical, 10)
@@ -76,7 +85,17 @@ struct OnboardingView: View {
             }
             .padding(.bottom, 8)
         }
+        .onChange(of: page) { _, newPage in
+            // The quiz is required: no swiping past it until it's done
+            if newPage > stylePage && quizData.isEmpty { withAnimation { page = stylePage } }
+        }
         .sheet(isPresented: $showGuide) { HowItWorksGuideView() }
+        .fullScreenCover(isPresented: $showQuiz) {
+            StyleQuizView(canClose: false) {
+                showQuiz = false
+                withAnimation { page = stylePage + 1 }
+            }
+        }
     }
 
     // MARK: - Pages (one or two short lines each)
@@ -183,31 +202,29 @@ struct OnboardingView: View {
     private var yourStyle: some View {
         pageContainer {
             pageTitle("Your style")
+            Text("6 quick questions so the Oracle picks outfits that feel like you.")
+                .font(.headline)
+                .foregroundColor(.ooBrown)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Text("Colors you love").font(.headline).foregroundColor(.ooBrown)
-            FlowChips(options: Vocabulary.colors, selected: setBinding($favoriteColorsRaw), minWidth: 70) { color in
-                HStack(spacing: 4) {
-                    ColorSwatch(hex: Vocabulary.hex(for: color), size: 10)
-                    Text(color.capitalizedFirst)
+            if quizData.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    infoRow("tshirt", "Your vibe and colors")
+                    infoRow("hand.thumbsdown", "What you'd never wear")
+                    infoRow("clock", "About a minute. Skip any question you like.")
                 }
+            } else {
+                StyleQuizCard { showQuiz = true }
             }
-
-            Text("Styles").font(.headline).foregroundColor(.ooBrown)
-            FlowChips(options: SettingsView.styleOptions, selected: setBinding($stylesRaw), minWidth: 70) { Text($0) }
-
-            Text("In your own words").font(.headline).foregroundColor(.ooBrown)
-            TextField("e.g. comfy, earthy colors, no leather", text: $styleNotes)
-                .textFieldStyle(.roundedBorder)
-                .submitLabel(.done)
         }
     }
 
     private var privacy: some View {
         pageContainer {
             pageTitle("Private by design")
-            privacyRow("iphone", "Your closet stays on your phone.")
-            privacyRow("cpu", "The AI runs on-device.")
-            privacyRow("location", "Location is only used for weather.")
+            infoRow("iphone", "Your closet stays on your phone.")
+            infoRow("cpu", "The AI runs on-device.")
+            infoRow("location", "Location is only used for weather.")
         }
     }
 
@@ -221,7 +238,7 @@ struct OnboardingView: View {
             .lineLimit(1)
     }
 
-    private func privacyRow(_ symbol: String, _ text: String) -> some View {
+    private func infoRow(_ symbol: String, _ text: String) -> some View {
         Label(text, systemImage: symbol)
             .font(.headline)
             .foregroundColor(.ooBrown)
@@ -229,12 +246,5 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.ooButter)
             .cornerRadius(18)
-    }
-
-    private func setBinding(_ raw: Binding<String>) -> Binding<Set<String>> {
-        Binding(
-            get: { Set(raw.wrappedValue.split(separator: ",").map(String.init)) },
-            set: { raw.wrappedValue = $0.sorted().joined(separator: ",") }
-        )
     }
 }

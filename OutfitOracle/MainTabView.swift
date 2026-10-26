@@ -13,6 +13,8 @@ struct MainTabView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.modelContext) private var modelContext
     @AppStorage(PrefKeys.hasOnboarded) private var hasOnboarded = false
+    @AppStorage(PrefKeys.styleQuiz) private var quizData = Data()
+    @State private var showRequiredQuiz = false
 
     /// Show the intro on first launch
     private var needsOnboarding: Bool { !hasOnboarded }
@@ -81,6 +83,15 @@ struct MainTabView: View {
                 // Debug builds: load the test closet once the intro is done
                 OutfitOracleApp.loadTestClosetForDevelopment(into: modelContext)
             }
+        }
+        .background {
+            // People who finished the intro before the quiz existed take it once on their next launch
+            Color.clear.fullScreenCover(isPresented: $showRequiredQuiz) {
+                StyleQuizView(canClose: false) { showRequiredQuiz = false }
+            }
+        }
+        .task {
+            showRequiredQuiz = hasOnboarded && quizData.isEmpty && !OutfitOracleApp.isDemo
         }
     }
 }

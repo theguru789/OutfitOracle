@@ -127,7 +127,11 @@ struct UploadView: View {
             }
             .ignoresSafeArea()
         }
-        .sheet(isPresented: $showReview) {
+        .sheet(isPresented: $showReview, onDismiss: {
+            // Clear only once the sheet is gone: its "Keep" toggles still read
+            // the drafts while it slides away, and an empty list crashes them
+            drafts = []
+        }) {
             ReviewGarmentsSheet(drafts: $drafts) {
                 save()
             }
@@ -186,7 +190,6 @@ struct UploadView: View {
         try? modelContext.save()
         // Lift each garment off its background for outfit pictures (runs in the background)
         Task { await CutoutService.backfill(modelContext) }
-        drafts = []
         pickedImage = nil
         manualMode = false
         showReview = false
